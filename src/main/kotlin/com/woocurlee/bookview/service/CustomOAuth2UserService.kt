@@ -12,16 +12,8 @@ import org.springframework.stereotype.Service
 class CustomOAuth2UserService(
     private val userRepository: UserRepository,
 ) : DefaultOAuth2UserService() {
-    private val log = org.slf4j.LoggerFactory.getLogger(javaClass)
-
     override fun loadUser(userRequest: OAuth2UserRequest): OAuth2User {
         val oAuth2User = super.loadUser(userRequest)
-
-        log.info("=== 구글 로그인 사용자 정보 ===")
-        log.info("Google ID: ${oAuth2User.attributes["sub"]}")
-        log.info("Name: ${oAuth2User.attributes["name"]}")
-        log.info("Email: ${oAuth2User.attributes["email"]}")
-        log.info("Picture: ${oAuth2User.attributes["picture"]}")
 
         val googleId = oAuth2User.attributes["sub"].toString()
         val nickname = oAuth2User.attributes["name"] as? String ?: "Unknown"
@@ -31,7 +23,6 @@ class CustomOAuth2UserService(
         var user = userRepository.findByGoogleId(googleId)
 
         if (user == null) {
-            log.info("신규 사용자 생성: $googleId")
             user =
                 User(
                     googleId = googleId,
@@ -40,7 +31,6 @@ class CustomOAuth2UserService(
                     profileImageUrl = profileImageUrl,
                 )
         } else {
-            log.info("기존 사용자 업데이트: $googleId")
             user =
                 user.copy(
                     nickname = nickname,
@@ -50,10 +40,7 @@ class CustomOAuth2UserService(
                 )
         }
 
-        val savedUser = userRepository.save(user)
-        log.info("사용자 저장 완료 - DB ID: ${savedUser.id}")
-        log.info("MongoDB Database: bookview, Collection: users")
-        log.info("==============================")
+        userRepository.save(user)
 
         return oAuth2User
     }

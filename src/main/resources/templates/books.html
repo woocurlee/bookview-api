@@ -129,8 +129,8 @@
 
     <div class="container">
         <section class="books-section">
-            <h2 class="section-title">전체 도서</h2>
-            <div class="books-grid">
+            <h2 class="section-title" th:text="${query != null && !query.isEmpty()} ? '검색 결과: ' + ${query} : '전체 도서'">전체 도서</h2>
+            <div class="books-grid" th:if="${books != null && !books.isEmpty()}">
                 <div class="book-card" th:each="book : ${books}">
                     <div class="book-title" th:text="${book.title}">책 제목</div>
                     <div class="book-author" th:text="${book.author}">저자</div>
@@ -139,6 +139,15 @@
                         <span>ISBN: <span th:text="${book.isbn}"></span></span>
                     </div>
                 </div>
+            </div>
+            <div class="empty-state" th:if="${books == null || books.isEmpty()}">
+                <div class="empty-state-icon">📖</div>
+                <p th:if="${query != null && !query.isEmpty()}">
+                    '<span th:text="${query}"></span>' 검색 결과가 없습니다.
+                </p>
+                <p th:if="${query == null || query.isEmpty()}">
+                    아직 등록된 책이 없습니다.
+                </p>
             </div>
         </section>
     </div>

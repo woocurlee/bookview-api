@@ -18,5 +18,10 @@ server:
 
 logging:
   level:
-    org.springframework.security: DEBUG
-    org.springframework.security.oauth2: DEBUG
+    root: INFO
+    com.woocurlee.bookview: INFO
+    org.springframework.web: WARN
+    org.springframework.security: WARN
+    org.springframework.security.oauth2: WARN
+    org.springframework.data.mongodb: WARN
+    org.mongodb.driver: WARN

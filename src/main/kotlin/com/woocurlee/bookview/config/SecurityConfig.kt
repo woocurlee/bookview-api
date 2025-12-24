@@ -20,9 +20,17 @@ class SecurityConfig(
             .csrf { it.disable() }
             .authorizeHttpRequests { auth ->
                 auth
-                    .requestMatchers("/", "/login/**", "/oauth2/**", "/css/**", "/js/**", "/images/**")
-                    .permitAll()
-                    .requestMatchers("/api/users", "/api/users/db-info")
+                    .requestMatchers(
+                        "/",
+                        "/books",
+                        "/write-review",
+                        "/login/**",
+                        "/oauth2/**",
+                        "/css/**",
+                        "/js/**",
+                        "/images/**",
+                    ).permitAll()
+                    .requestMatchers("/api/users", "/api/users/db-info", "/api/external/**")
                     .permitAll()
                     .requestMatchers("/api/**")
                     .authenticated()

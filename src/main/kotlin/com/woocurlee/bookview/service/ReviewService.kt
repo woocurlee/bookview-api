@@ -9,18 +9,22 @@ import org.springframework.stereotype.Service
 class ReviewService(
     private val reviewRepository: ReviewRepository,
 ) {
-    fun getReviewsByBookId(bookId: String): List<Review> = reviewRepository.findByBookId(bookId)
+    fun getReviewsByUserId(userId: String): List<Review> = reviewRepository.findByUserId(userId)
 
     fun createReview(review: Review): Review = reviewRepository.save(review)
 
+    fun getAllReviews(): List<Review> = reviewRepository.findAll()
+
     fun updateReview(
         id: String,
+        title: String,
         content: String,
         rating: Int,
     ): Review? {
         val review = reviewRepository.findById(id).orElse(null) ?: return null
         val updated =
             review.copy(
+                title = title,
                 content = content,
                 rating = rating,
                 updatedAt = LocalDateTime.now(),

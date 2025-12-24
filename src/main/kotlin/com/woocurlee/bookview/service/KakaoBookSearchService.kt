@@ -16,20 +16,28 @@ class KakaoBookSearchService(
         query: String,
         page: Int = 1,
         size: Int = 10,
-    ): KakaoBookSearchResponse? =
-        kakaoWebClient
-            .get()
-            .uri { uriBuilder ->
-                uriBuilder
-                    .path("/v3/search/book")
-                    .queryParam("query", query)
-                    .queryParam("page", page)
-                    .queryParam("size", size)
-                    .build()
-            }.header("Authorization", "KakaoAK $kakaoApiKey")
-            .retrieve()
-            .bodyToMono<KakaoBookSearchResponse>()
-            .block()
+    ): KakaoBookSearchResponse? {
+        print("Searching for $query")
+
+        val result =
+            kakaoWebClient
+                .get()
+                .uri { uriBuilder ->
+                    uriBuilder
+                        .path("/v3/search/book")
+                        .queryParam("query", query)
+                        .queryParam("page", page)
+                        .queryParam("size", size)
+                        .build()
+                }.header("Authorization", "KakaoAK $kakaoApiKey")
+                .retrieve()
+                .bodyToMono<KakaoBookSearchResponse>()
+                .block()
+
+        print("result: $result")
+
+        return result
+    }
 }
 
 data class KakaoBookSearchResponse(

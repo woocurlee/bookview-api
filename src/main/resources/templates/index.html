@@ -199,6 +199,7 @@
                 <div class="user-info">
                     <div sec:authorize="isAuthenticated()" th:if="${user != null}">
                         <div class="user-profile">
+                            <a href="/write-review" class="btn btn-primary">리뷰 작성</a>
                             <img th:src="${user.profileImageUrl}" alt="프로필" th:if="${user.profileImageUrl}">
                             <span th:text="${user.nickname}">사용자</span>
                             <a href="/logout" class="btn btn-secondary">로그아웃</a>

@@ -3,6 +3,8 @@ package com.woocurlee.bookview.controller
 import com.woocurlee.bookview.domain.Review
 import com.woocurlee.bookview.service.ReviewService
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.security.oauth2.core.user.OAuth2User
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -17,15 +19,36 @@ import org.springframework.web.bind.annotation.RestController
 class ReviewController(
     private val reviewService: ReviewService,
 ) {
-    @GetMapping("/book/{bookId}")
-    fun getReviewsByBookId(
-        @PathVariable bookId: String,
-    ): ResponseEntity<List<Review>> = ResponseEntity.ok(reviewService.getReviewsByBookId(bookId))
+    @GetMapping
+    fun getAllReviews(): ResponseEntity<List<Review>> = ResponseEntity.ok(reviewService.getAllReviews())
+
+    @GetMapping("/my")
+    fun getMyReviews(
+        @AuthenticationPrincipal oauth2User: OAuth2User,
+    ): ResponseEntity<List<Review>> {
+        val googleId = oauth2User.attributes["sub"].toString()
+        return ResponseEntity.ok(reviewService.getReviewsByUserId(googleId))
+    }
 
     @PostMapping
     fun createReview(
-        @RequestBody review: Review,
-    ): ResponseEntity<Review> = ResponseEntity.ok(reviewService.createReview(review))
+        @RequestBody request: CreateReviewRequest,
+        @AuthenticationPrincipal oauth2User: OAuth2User,
+    ): ResponseEntity<Review> {
+        val googleId = oauth2User.attributes["sub"].toString()
+        val review =
+            Review(
+                userId = googleId,
+                title = request.title,
+                bookTitle = request.bookTitle,
+                bookAuthor = request.bookAuthor,
+                bookIsbn = request.bookIsbn,
+                bookThumbnail = request.bookThumbnail,
+                rating = request.rating,
+                content = request.content,
+            )
+        return ResponseEntity.ok(reviewService.createReview(review))
+    }
 
     @PutMapping("/{id}")
     fun updateReview(
@@ -33,7 +56,7 @@ class ReviewController(
         @RequestBody request: UpdateReviewRequest,
     ): ResponseEntity<Review> {
         val updated =
-            reviewService.updateReview(id, request.content, request.rating)
+            reviewService.updateReview(id, request.title, request.content, request.rating)
                 ?: return ResponseEntity.notFound().build()
         return ResponseEntity.ok(updated)
     }
@@ -47,7 +70,18 @@ class ReviewController(
     }
 }
 
+data class CreateReviewRequest(
+    val title: String,
+    val bookTitle: String,
+    val bookAuthor: String,
+    val bookIsbn: String,
+    val bookThumbnail: String?,
+    val rating: Int,
+    val content: String,
+)
+
 data class UpdateReviewRequest(
+    val title: String,
     val content: String,
     val rating: Int,
 )

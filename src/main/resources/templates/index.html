@@ -189,6 +189,76 @@
             font-size: 64px;
             margin-bottom: 20px;
         }
+
+        /* 리뷰 카드 스타일 */
+        .reviews-section {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            margin-top: 30px;
+        }
+
+        .review-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: flex;
+            gap: 20px;
+        }
+
+        .review-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .review-book-thumbnail {
+            width: 80px;
+            height: 110px;
+            object-fit: cover;
+            border-radius: 8px;
+            flex-shrink: 0;
+        }
+
+        .review-content {
+            flex: 1;
+        }
+
+        .review-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .review-book-info {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .review-rating {
+            color: #ffd700;
+            margin-bottom: 10px;
+        }
+
+        .review-text {
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 10px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+        }
+
+        .review-date {
+            font-size: 12px;
+            color: #999;
+        }
     </style>
 </head>
 <body>
@@ -236,6 +306,35 @@
                 <div class="empty-state-icon">📖</div>
                 <p>아직 등록된 책이 없습니다.</p>
                 <p>첫 번째 책을 등록해보세요!</p>
+            </div>
+        </section>
+
+        <!-- 최근 리뷰 섹션 -->
+        <section class="reviews-section" th:if="${reviews != null && !reviews.isEmpty()}">
+            <h2 class="section-title">📝 최근 리뷰</h2>
+            <div th:each="review : ${reviews}">
+                <div class="review-card">
+                    <img th:src="${review.bookThumbnail}"
+                         alt="책 표지"
+                         class="review-book-thumbnail"
+                         th:if="${review.bookThumbnail != null && !review.bookThumbnail.isEmpty()}">
+                    <div class="review-content">
+                        <div class="review-title" th:text="${review.title}">리뷰 제목</div>
+                        <div class="review-book-info">
+                            <span th:text="${review.bookTitle}">책 제목</span> -
+                            <span th:text="${review.bookAuthor}">저자</span>
+                        </div>
+                        <div class="review-rating">
+                            <span th:each="i : ${#numbers.sequence(1, review.rating)}">★</span>
+                            <span th:each="i : ${#numbers.sequence(review.rating + 1, 5)}">☆</span>
+                        </div>
+                        <div class="review-text" th:utext="${review.content}">리뷰 내용...</div>
+                        <div class="review-date"
+                             th:text="${#temporals.format(review.createdAt, 'yyyy-MM-dd HH:mm')}">
+                            2024-12-24 10:00
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
     </div>

@@ -13,6 +13,10 @@ spring:
     database: bookview
     uri: mongodb://localhost:27017
 
+kakao:
+  api:
+    key: ${KAKAO_API_KEY}
+
 server:
   port: 8080
 

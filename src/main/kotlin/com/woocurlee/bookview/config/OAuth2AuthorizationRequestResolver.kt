@@ -20,60 +20,13 @@ class OAuth2AuthorizationRequestResolver(
         )
 
     override fun resolve(request: HttpServletRequest): OAuth2AuthorizationRequest? {
-        val authorizationRequest = defaultResolver.resolve(request)
-
-        if (authorizationRequest != null) {
-            log.info("=== OAuth2 Authorization Request ===")
-            log.info("Authorization URI: ${authorizationRequest.authorizationUri}")
-            log.info("Client ID: ${authorizationRequest.clientId}")
-            log.info("Redirect URI: ${authorizationRequest.redirectUri}")
-            log.info("Scope: ${authorizationRequest.scopes}")
-            log.info("State: ${authorizationRequest.state}")
-
-            // 실제 호출될 전체 URL 생성
-            val fullUrl =
-                buildString {
-                    append(authorizationRequest.authorizationUri)
-                    append("?response_type=code")
-                    append("&client_id=${authorizationRequest.clientId}")
-                    append("&redirect_uri=${authorizationRequest.redirectUri}")
-                    append("&scope=${authorizationRequest.scopes.joinToString(",")}")
-                    append("&state=${authorizationRequest.state}")
-                }
-            log.info("Full Authorization URL: $fullUrl")
-            log.info("===================================")
-        }
-
-        return authorizationRequest
+        return defaultResolver.resolve(request)
     }
 
     override fun resolve(
         request: HttpServletRequest,
         clientRegistrationId: String,
     ): OAuth2AuthorizationRequest? {
-        val authorizationRequest = defaultResolver.resolve(request, clientRegistrationId)
-
-        if (authorizationRequest != null) {
-            log.info("=== OAuth2 Authorization Request (with clientRegistrationId) ===")
-            log.info("Client Registration ID: $clientRegistrationId")
-            log.info("Authorization URI: ${authorizationRequest.authorizationUri}")
-            log.info("Client ID: ${authorizationRequest.clientId}")
-            log.info("Redirect URI: ${authorizationRequest.redirectUri}")
-            log.info("Scope: ${authorizationRequest.scopes}")
-
-            val fullUrl =
-                buildString {
-                    append(authorizationRequest.authorizationUri)
-                    append("?response_type=code")
-                    append("&client_id=${authorizationRequest.clientId}")
-                    append("&redirect_uri=${authorizationRequest.redirectUri}")
-                    append("&scope=${authorizationRequest.scopes.joinToString(",")}")
-                    append("&state=${authorizationRequest.state}")
-                }
-            log.info("Full Authorization URL: $fullUrl")
-            log.info("===============================================================")
-        }
-
-        return authorizationRequest
+        return defaultResolver.resolve(request, clientRegistrationId)
     }
 }

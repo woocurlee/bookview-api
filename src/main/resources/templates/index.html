@@ -293,26 +293,9 @@
             </div>
         </section>
 
-        <section class="books-section">
-            <h2 class="section-title">최근 등록된 책</h2>
-            <div class="books-grid" th:if="${books != null && !books.isEmpty()}">
-                <div class="book-card" th:each="book : ${books}">
-                    <div class="book-title" th:text="${book.title}">책 제목</div>
-                    <div class="book-author" th:text="${book.author}">저자</div>
-                    <div class="book-year" th:text="${book.publishedYear}">출판년도</div>
-                </div>
-            </div>
-            <div class="empty-state" th:if="${books == null || books.isEmpty()}">
-                <div class="empty-state-icon">📖</div>
-                <p>아직 등록된 책이 없습니다.</p>
-                <p>첫 번째 책을 등록해보세요!</p>
-            </div>
-        </section>
-
-        <!-- 최근 리뷰 섹션 -->
         <section class="reviews-section" th:if="${reviews != null && !reviews.isEmpty()}">
             <h2 class="section-title">📝 최근 리뷰</h2>
-            <div th:each="review : ${reviews}">
+            <div id="reviewsContainer" th:each="review : ${reviews}">
                 <div class="review-card">
                     <img th:src="${review.bookThumbnail}"
                          alt="책 표지"
@@ -326,7 +309,7 @@
                         </div>
                         <div class="review-rating">
                             <span th:each="i : ${#numbers.sequence(1, review.rating)}">★</span>
-                            <span th:each="i : ${#numbers.sequence(review.rating + 1, 5)}">☆</span>
+                            <span th:if="${review.rating < 5}" th:each="i : ${#numbers.sequence(review.rating + 1, 5)}">☆</span>
                         </div>
                         <div class="review-text" th:utext="${review.content}">리뷰 내용...</div>
                         <div class="review-date"
@@ -336,10 +319,20 @@
                     </div>
                 </div>
             </div>
+            <div id="loading" style="text-align: center; padding: 20px; display: none;">
+                <p>로딩 중...</p>
+            </div>
+            <div id="endMessage" style="text-align: center; padding: 20px; color: #999; display: none;">
+                <p>모든 리뷰를 불러왔습니다.</p>
+            </div>
         </section>
     </div>
 
     <script>
+        let currentPage = 1; // 첫 페이지는 서버에서 렌더링되므로 1부터 시작
+        let isLoading = false;
+        let hasMore = /*[[${hasMoreReviews}]]*/ true;
+
         function searchBooks() {
             const query = document.getElementById('searchInput').value;
             if (query.trim()) {
@@ -351,6 +344,77 @@
             if (e.key === 'Enter') {
                 searchBooks();
             }
+        });
+
+        // 무한 스크롤
+        async function loadMoreReviews() {
+            if (isLoading || !hasMore) return;
+
+            isLoading = true;
+            document.getElementById('loading').style.display = 'block';
+
+            try {
+                const response = await fetch(`/api/reviews?page=${currentPage}&size=10`);
+                const data = await response.json();
+
+                if (data.reviews && data.reviews.length > 0) {
+                    const container = document.getElementById('reviewsContainer');
+                    data.reviews.forEach(review => {
+                        const reviewCard = createReviewCard(review);
+                        container.insertAdjacentHTML('beforeend', reviewCard);
+                    });
+                    currentPage++;
+                    hasMore = data.hasMore;
+                } else {
+                    hasMore = false;
+                }
+
+                if (!hasMore) {
+                    document.getElementById('endMessage').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('리뷰 로딩 실패:', error);
+            } finally {
+                isLoading = false;
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        function createReviewCard(review) {
+            const thumbnail = review.bookThumbnail
+                ? `<img src="${review.bookThumbnail}" alt="책 표지" class="review-book-thumbnail">`
+                : '';
+
+            const stars = '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating);
+
+            return `
+                <div class="review-card">
+                    ${thumbnail}
+                    <div class="review-content">
+                        <div class="review-title">${review.title}</div>
+                        <div class="review-book-info">
+                            <span>${review.bookTitle}</span> -
+                            <span>${review.bookAuthor}</span>
+                        </div>
+                        <div class="review-rating">${stars}</div>
+                        <div class="review-text">${review.content}</div>
+                        <div class="review-date">${new Date(review.createdAt).toLocaleString('ko-KR')}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 스크롤 이벤트 리스너
+        let scrollTimeout;
+        window.addEventListener('scroll', () => {
+            if (scrollTimeout) {
+                clearTimeout(scrollTimeout);
+            }
+            scrollTimeout = setTimeout(() => {
+                if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500) {
+                    loadMoreReviews();
+                }
+            }, 100);
         });
     </script>
 </body>

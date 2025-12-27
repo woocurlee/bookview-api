@@ -2,6 +2,8 @@ package com.woocurlee.bookview.controller
 
 import com.woocurlee.bookview.domain.Review
 import com.woocurlee.bookview.service.ReviewService
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Sort
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.oauth2.core.user.OAuth2User
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
@@ -20,7 +23,20 @@ class ReviewController(
     private val reviewService: ReviewService,
 ) {
     @GetMapping
-    fun getAllReviews(): ResponseEntity<List<Review>> = ResponseEntity.ok(reviewService.getAllReviews())
+    fun getAllReviews(
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "10") size: Int,
+    ): ResponseEntity<Map<String, Any>> {
+        val pageable = PageRequest.of(page, size, Sort.by("createdAt").descending())
+        val reviewsPage = reviewService.getReviews(pageable)
+
+        return ResponseEntity.ok(
+            mapOf(
+                "reviews" to reviewsPage.content,
+                "hasMore" to reviewsPage.hasNext()
+            )
+        )
+    }
 
     @GetMapping("/my")
     fun getMyReviews(

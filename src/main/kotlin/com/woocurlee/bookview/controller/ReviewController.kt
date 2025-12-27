@@ -33,8 +33,8 @@ class ReviewController(
         return ResponseEntity.ok(
             mapOf(
                 "reviews" to reviewsPage.content,
-                "hasMore" to reviewsPage.hasNext()
-            )
+                "hasMore" to reviewsPage.hasNext(),
+            ),
         )
     }
 

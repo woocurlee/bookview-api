@@ -19,14 +19,10 @@ class OAuth2AuthorizationRequestResolver(
             "/oauth2/authorization",
         )
 
-    override fun resolve(request: HttpServletRequest): OAuth2AuthorizationRequest? {
-        return defaultResolver.resolve(request)
-    }
+    override fun resolve(request: HttpServletRequest): OAuth2AuthorizationRequest? = defaultResolver.resolve(request)
 
     override fun resolve(
         request: HttpServletRequest,
         clientRegistrationId: String,
-    ): OAuth2AuthorizationRequest? {
-        return defaultResolver.resolve(request, clientRegistrationId)
-    }
+    ): OAuth2AuthorizationRequest? = defaultResolver.resolve(request, clientRegistrationId)
 }

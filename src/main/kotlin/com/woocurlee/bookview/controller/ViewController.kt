@@ -22,7 +22,14 @@ class ViewController(
         @AuthenticationPrincipal oauth2User: OAuth2User?,
     ): String {
         // 최근 리뷰 10개 추가 (페이징)
-        val pageable = org.springframework.data.domain.PageRequest.of(0, 10, org.springframework.data.domain.Sort.by("createdAt").descending())
+        val pageable =
+            org.springframework.data.domain.PageRequest.of(
+                0,
+                10,
+                org.springframework.data.domain.Sort
+                    .by("createdAt")
+                    .descending(),
+            )
         val reviewsPage = reviewService.getReviews(pageable)
         model.addAttribute("reviews", reviewsPage.content)
         model.addAttribute("hasMoreReviews", reviewsPage.hasNext())

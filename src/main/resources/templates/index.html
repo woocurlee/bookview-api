@@ -244,6 +244,16 @@
             margin-bottom: 10px;
         }
 
+        .review-quote {
+            background: #f0f0f0;
+            border-left: 4px solid #667eea;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            font-style: italic;
+            color: #555;
+            border-radius: 4px;
+        }
+
         .review-text {
             color: #555;
             line-height: 1.6;
@@ -310,6 +320,9 @@
                         <div class="review-rating">
                             <span th:each="i : ${#numbers.sequence(1, review.rating)}">★</span>
                             <span th:if="${review.rating < 5}" th:each="i : ${#numbers.sequence(review.rating + 1, 5)}">☆</span>
+                        </div>
+                        <div class="review-quote" th:if="${review.quote != null && !review.quote.isEmpty()}">
+                            "<span th:text="${review.quote}"></span>"
                         </div>
                         <div class="review-text" th:utext="${review.content}">리뷰 내용...</div>
                         <div class="review-date"
@@ -387,6 +400,10 @@
 
             const stars = '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating);
 
+            const quote = review.quote
+                ? `<div class="review-quote">"${review.quote}"</div>`
+                : '';
+
             return `
                 <div class="review-card">
                     ${thumbnail}
@@ -397,6 +414,7 @@
                             <span>${review.bookAuthor}</span>
                         </div>
                         <div class="review-rating">${stars}</div>
+                        ${quote}
                         <div class="review-text">${review.content}</div>
                         <div class="review-date">${new Date(review.createdAt).toLocaleString('ko-KR')}</div>
                     </div>

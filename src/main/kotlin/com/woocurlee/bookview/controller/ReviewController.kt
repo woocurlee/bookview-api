@@ -61,6 +61,7 @@ class ReviewController(
                 bookIsbn = request.bookIsbn,
                 bookThumbnail = request.bookThumbnail,
                 rating = request.rating,
+                quote = request.quote,
                 content = request.content,
             )
         return ResponseEntity.ok(reviewService.createReview(review))
@@ -93,6 +94,7 @@ data class CreateReviewRequest(
     val bookIsbn: String,
     val bookThumbnail: String?,
     val rating: Int,
+    val quote: String,
     val content: String,
 )
 

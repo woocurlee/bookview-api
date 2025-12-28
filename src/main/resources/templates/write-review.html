@@ -48,6 +48,10 @@
             color: #333;
         }
 
+        label .required {
+            color: #ff4444;
+        }
+
         input[type="text"] {
             width: 100%;
             padding: 12px;
@@ -268,12 +272,12 @@
             <h1>📝 리뷰 작성</h1>
 
             <div class="form-group">
-                <label>리뷰 제목 *</label>
+                <label>리뷰 제목 <span class="required">*</span></label>
                 <input type="text" id="reviewTitle" placeholder="리뷰 제목을 입력하세요">
             </div>
 
             <div class="form-group">
-                <label>책 선택 *</label>
+                <label>책 선택 <span class="required">*</span></label>
                 <button class="book-select-btn" onclick="openBookModal()">책 검색하기</button>
                 <div class="selected-book" id="selectedBook">
                     <img id="selectedBookThumbnail" src="" alt="책 표지">
@@ -285,7 +289,7 @@
             </div>
 
             <div class="form-group">
-                <label>별점 *</label>
+                <label>별점 <span class="required">*</span></label>
                 <div class="rating" id="rating">
                     <span class="star" data-rating="1" onclick="setRating(1)">★</span>
                     <span class="star" data-rating="2" onclick="setRating(2)">★</span>
@@ -296,7 +300,15 @@
             </div>
 
             <div class="form-group">
-                <label>리뷰 내용 *</label>
+                <label>명언 <span class="required">*</span> (5~100자)</label>
+                <input type="text" id="quote" placeholder="책에서 인상 깊었던 명언을 입력하세요" maxlength="100">
+                <div style="font-size: 12px; color: #999; margin-top: 5px;">
+                    <span id="quoteLength">0</span>/100자
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>리뷰 내용 <span class="required">*</span></label>
                 <div id="editor"></div>
             </div>
 
@@ -338,6 +350,11 @@
 
         let selectedRating = 0;
         let selectedBook = null;
+
+        // 명언 글자수 카운터
+        document.getElementById('quote').addEventListener('input', function() {
+            document.getElementById('quoteLength').textContent = this.value.length;
+        });
 
         // 별점 설정
         function setRating(rating) {
@@ -420,6 +437,7 @@
         // 리뷰 제출
         async function submitReview() {
             const title = document.getElementById('reviewTitle').value;
+            const quote = document.getElementById('quote').value;
             const content = quill.root.innerHTML;
 
             if (!title.trim()) {
@@ -434,6 +452,16 @@
 
             if (selectedRating === 0) {
                 alert('별점을 선택하세요');
+                return;
+            }
+
+            if (!quote.trim()) {
+                alert('명언을 입력하세요');
+                return;
+            }
+
+            if (quote.trim().length < 5 || quote.trim().length > 100) {
+                alert('명언은 5~100자로 입력하세요');
                 return;
             }
 
@@ -455,6 +483,7 @@
                         bookIsbn: selectedBook.isbn,
                         bookThumbnail: selectedBook.thumbnail,
                         rating: selectedRating,
+                        quote: quote,
                         content: content
                     })
                 });

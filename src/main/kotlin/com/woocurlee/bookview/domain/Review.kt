@@ -15,6 +15,7 @@ data class Review(
     val bookIsbn: String,
     val bookThumbnail: String?,
     val rating: Int, // 1-5
+    val quote: String, // 명언 (5~100자)
     val content: String,
     val createdAt: LocalDateTime = LocalDateTime.now(),
     val updatedAt: LocalDateTime = LocalDateTime.now(),

@@ -13,7 +13,8 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #555555;
+            /*background: #D0F5D1;*/
             min-height: 100vh;
             color: #333;
         }
@@ -40,7 +41,7 @@
         .logo {
             font-size: 28px;
             font-weight: bold;
-            color: #667eea;
+            color: #3B8C6E;
         }
 
         .user-info {
@@ -73,12 +74,12 @@
         }
 
         .btn-primary {
-            background: #667eea;
+            background: #3B8C6E;
             color: white;
         }
 
         .btn-primary:hover {
-            background: #5568d3;
+            background: #2a6550;
         }
 
         .btn-secondary {
@@ -109,6 +110,53 @@
             font-size: 18px;
             color: #666;
             margin-bottom: 30px;
+        }
+
+        /* 리뷰 작성 유도 박스 */
+        .write-prompt-box {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .write-prompt-box:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .write-prompt-box img {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .write-prompt-box .placeholder {
+            flex: 1;
+            padding: 12px 20px;
+            background: #f5f5f5;
+            border-radius: 25px;
+            color: #999;
+            font-size: 16px;
+        }
+
+        .write-prompt-box .icon-placeholder {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
         }
 
         .search-box {
@@ -202,7 +250,7 @@
         .review-card {
             background: #f8f9fa;
             border-radius: 10px;
-            padding: 20px;
+            padding: 10px;
             margin-bottom: 20px;
             transition: transform 0.3s, box-shadow 0.3s;
             display: flex;
@@ -294,17 +342,14 @@
     </header>
 
     <div class="container">
-        <section class="hero">
-            <h1>책을 검색하고 리뷰를 공유하세요</h1>
-            <p>다양한 책들과 독자들의 생생한 리뷰를 만나보세요</p>
-            <div class="search-box">
-                <input type="text" id="searchInput" placeholder="책 제목이나 저자를 검색하세요">
-                <button class="btn btn-primary" onclick="searchBooks()">검색</button>
-            </div>
-        </section>
+        <!-- 리뷰 작성 유도 박스 -->
+        <div class="write-prompt-box" onclick="goToWriteReview()" sec:authorize="isAuthenticated()" th:if="${user != null}">
+            <img th:src="${user.profileImageUrl}" alt="프로필" th:if="${user.profileImageUrl}">
+            <div class="icon-placeholder" th:unless="${user.profileImageUrl}">✏️</div>
+            <div class="placeholder">오늘 읽은 책에 대한 생각을 공유해보세요...</div>
+        </div>
 
         <section class="reviews-section" th:if="${reviews != null && !reviews.isEmpty()}">
-            <h2 class="section-title">📝 최근 리뷰</h2>
             <div id="reviewsContainer" th:each="review : ${reviews}">
                 <div class="review-card">
                     <img th:src="${review.bookThumbnail}"
@@ -345,6 +390,10 @@
         let currentPage = 1; // 첫 페이지는 서버에서 렌더링되므로 1부터 시작
         let isLoading = false;
         let hasMore = /*[[${hasMoreReviews}]]*/ true;
+
+        function goToWriteReview() {
+            window.location.href = '/write-review';
+        }
 
         function searchBooks() {
             const query = document.getElementById('searchInput').value;

@@ -1,340 +1,92 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>리뷰 작성 - BookView</title>
-    <!-- Quill Editor CSS -->
-    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<head th:replace="~{layout :: head('리뷰 작성 - BookView')}"></head>
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<style>
+    #editor {
+        height: 300px;
+        background: white;
+    }
+    .star.active {
+        color: #ffd700;
+    }
+</style>
+<body class="bg-gradient-to-br from-emerald-500 to-green-600 min-h-screen p-5">
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-white rounded-2xl p-10 shadow-lg">
+            <h1 class="text-gray-800 mb-8 text-3xl font-bold">📝 리뷰 작성</h1>
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-        }
-
-        .review-form {
-            background: white;
-            border-radius: 15px;
-            padding: 40px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-        }
-
-        h1 {
-            color: #333;
-            margin-bottom: 30px;
-        }
-
-        .form-group {
-            margin-bottom: 25px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #333;
-        }
-
-        label .required {
-            color: #ff4444;
-        }
-
-        input[type="text"] {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 16px;
-        }
-
-        input[type="text"]:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .book-select-btn {
-            width: 100%;
-            padding: 12px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background 0.3s;
-        }
-
-        .book-select-btn:hover {
-            background: #5568d3;
-        }
-
-        .selected-book {
-            display: none;
-            margin-top: 15px;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 8px;
-        }
-
-        .selected-book.active {
-            display: flex;
-            gap: 15px;
-        }
-
-        .selected-book img {
-            width: 80px;
-            height: 110px;
-            object-fit: cover;
-            border-radius: 4px;
-        }
-
-        .selected-book-info {
-            flex: 1;
-        }
-
-        .selected-book-title {
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
-
-        .selected-book-author {
-            color: #666;
-            font-size: 14px;
-        }
-
-        /* Quill Editor */
-        #editor {
-            height: 300px;
-            background: white;
-        }
-
-        /* 별점 */
-        .rating {
-            display: flex;
-            gap: 10px;
-            font-size: 32px;
-        }
-
-        .star {
-            cursor: pointer;
-            color: #ddd;
-            transition: color 0.2s;
-        }
-
-        .star.active,
-        .star:hover {
-            color: #ffd700;
-        }
-
-        .submit-btn {
-            width: 100%;
-            padding: 15px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 18px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        .submit-btn:hover {
-            background: #5568d3;
-        }
-
-        /* 모달 */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
-        }
-
-        .modal.active {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal-content {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            width: 90%;
-            max-width: 600px;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .modal-header h2 {
-            color: #333;
-        }
-
-        .close-btn {
-            font-size: 28px;
-            cursor: pointer;
-            color: #999;
-        }
-
-        .search-box {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .search-box input {
-            flex: 1;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-        }
-
-        .search-btn {
-            padding: 12px 20px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-
-        .book-list {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .book-item {
-            display: flex;
-            gap: 15px;
-            padding: 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .book-item:hover {
-            border-color: #667eea;
-            background: #f8f9fa;
-        }
-
-        .book-item img {
-            width: 60px;
-            height: 85px;
-            object-fit: cover;
-            border-radius: 4px;
-        }
-
-        .book-item-info {
-            flex: 1;
-        }
-
-        .book-item-title {
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
-
-        .book-item-author {
-            color: #666;
-            font-size: 14px;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="review-form">
-            <h1>📝 리뷰 작성</h1>
-
-            <div class="form-group">
-                <label>리뷰 제목 <span class="required">*</span></label>
-                <input type="text" id="reviewTitle" placeholder="리뷰 제목을 입력하세요">
+            <div class="mb-6">
+                <label class="block mb-2 font-semibold text-gray-800">리뷰 제목 <span class="text-red-500">*</span></label>
+                <input type="text" id="reviewTitle" placeholder="리뷰 제목을 입력하세요"
+                       class="w-full p-3 border-2 border-gray-200 rounded-lg text-base focus:outline-none focus:border-emerald-500">
             </div>
 
-            <div class="form-group">
-                <label>책 선택 <span class="required">*</span></label>
-                <button class="book-select-btn" onclick="openBookModal()">책 검색하기</button>
-                <div class="selected-book" id="selectedBook">
-                    <img id="selectedBookThumbnail" src="" alt="책 표지">
-                    <div class="selected-book-info">
-                        <div class="selected-book-title" id="selectedBookTitle"></div>
-                        <div class="selected-book-author" id="selectedBookAuthor"></div>
+            <div class="mb-6">
+                <label class="block mb-2 font-semibold text-gray-800">책 선택 <span class="text-red-500">*</span></label>
+                <button onclick="openBookModal()" class="w-full p-3 bg-emerald-500 text-white rounded-lg text-base cursor-pointer transition-colors hover:bg-emerald-600">
+                    책 검색하기
+                </button>
+                <div id="selectedBook" class="hidden mt-4 p-4 bg-gray-50 rounded-lg">
+                    <div class="flex gap-4">
+                        <img id="selectedBookThumbnail" src="" alt="책 표지" class="w-20 h-28 object-cover rounded">
+                        <div class="flex-1">
+                            <div id="selectedBookTitle" class="font-semibold mb-1"></div>
+                            <div id="selectedBookAuthor" class="text-gray-600 text-sm"></div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="form-group">
-                <label>별점 <span class="required">*</span></label>
-                <div class="rating" id="rating">
-                    <span class="star" data-rating="1" onclick="setRating(1)">★</span>
-                    <span class="star" data-rating="2" onclick="setRating(2)">★</span>
-                    <span class="star" data-rating="3" onclick="setRating(3)">★</span>
-                    <span class="star" data-rating="4" onclick="setRating(4)">★</span>
-                    <span class="star" data-rating="5" onclick="setRating(5)">★</span>
+            <div class="mb-6">
+                <label class="block mb-2 font-semibold text-gray-800">별점 <span class="text-red-500">*</span></label>
+                <div id="rating" class="flex gap-2 text-4xl">
+                    <span class="star cursor-pointer text-gray-300 transition-colors hover:text-yellow-400" data-rating="1" onclick="setRating(1)">★</span>
+                    <span class="star cursor-pointer text-gray-300 transition-colors hover:text-yellow-400" data-rating="2" onclick="setRating(2)">★</span>
+                    <span class="star cursor-pointer text-gray-300 transition-colors hover:text-yellow-400" data-rating="3" onclick="setRating(3)">★</span>
+                    <span class="star cursor-pointer text-gray-300 transition-colors hover:text-yellow-400" data-rating="4" onclick="setRating(4)">★</span>
+                    <span class="star cursor-pointer text-gray-300 transition-colors hover:text-yellow-400" data-rating="5" onclick="setRating(5)">★</span>
                 </div>
             </div>
 
-            <div class="form-group">
-                <label>명언 <span class="required">*</span> (5~100자)</label>
-                <input type="text" id="quote" placeholder="책에서 인상 깊었던 명언을 입력하세요" maxlength="100">
-                <div style="font-size: 12px; color: #999; margin-top: 5px;">
+            <div class="mb-6">
+                <label class="block mb-2 font-semibold text-gray-800">명언 <span class="text-red-500">*</span> (5~100자)</label>
+                <input type="text" id="quote" placeholder="책에서 인상 깊었던 명언을 입력하세요" maxlength="100"
+                       class="w-full p-3 border-2 border-gray-200 rounded-lg text-base focus:outline-none focus:border-emerald-500">
+                <div class="text-xs text-gray-400 mt-1">
                     <span id="quoteLength">0</span>/100자
                 </div>
             </div>
 
-            <div class="form-group">
-                <label>리뷰 내용 <span class="required">*</span></label>
+            <div class="mb-6">
+                <label class="block mb-2 font-semibold text-gray-800">리뷰 내용 <span class="text-red-500">*</span></label>
                 <div id="editor"></div>
             </div>
 
-            <button class="submit-btn" onclick="submitReview()">리뷰 등록</button>
+            <button onclick="submitReview()" class="w-full p-4 bg-green-500 text-white rounded-lg text-lg font-semibold cursor-pointer transition-colors hover:bg-green-600">
+                리뷰 등록
+            </button>
         </div>
     </div>
 
     <!-- 책 검색 모달 -->
-    <div class="modal" id="bookModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>책 검색</h2>
-                <span class="close-btn" onclick="closeBookModal()">&times;</span>
+    <div id="bookModal" class="hidden fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 z-50 flex justify-center items-center">
+        <div class="bg-white rounded-2xl p-8 w-11/12 max-w-2xl max-h-[80vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-5">
+                <h2 class="text-gray-800 text-2xl font-bold">책 검색</h2>
+                <span onclick="closeBookModal()" class="text-4xl cursor-pointer text-gray-400 hover:text-gray-600">&times;</span>
             </div>
-            <div class="search-box">
-                <input type="text" id="bookSearch" placeholder="책 제목이나 저자를 입력하세요">
-                <button class="search-btn" onclick="searchBooks()">검색</button>
+            <div class="flex gap-2 mb-5">
+                <input type="text" id="bookSearch" placeholder="책 제목이나 저자를 입력하세요"
+                       class="flex-1 p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-green-500">
+                <button onclick="searchBooks()" class="px-5 py-3 bg-green-500 text-white rounded-lg cursor-pointer hover:bg-green-600">검색</button>
             </div>
-            <div class="book-list" id="bookList"></div>
+            <div id="bookList" class="flex flex-col gap-4"></div>
         </div>
     </div>
 
-    <!-- Quill Editor JS -->
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     <script>
-        // Quill Editor 초기화
         const quill = new Quill('#editor', {
             theme: 'snow',
             modules: {
@@ -351,12 +103,10 @@
         let selectedRating = 0;
         let selectedBook = null;
 
-        // 명언 글자수 카운터
         document.getElementById('quote').addEventListener('input', function() {
             document.getElementById('quoteLength').textContent = this.value.length;
         });
 
-        // 별점 설정
         function setRating(rating) {
             selectedRating = rating;
             const stars = document.querySelectorAll('.star');
@@ -369,17 +119,14 @@
             });
         }
 
-        // 모달 열기
         function openBookModal() {
-            document.getElementById('bookModal').classList.add('active');
+            document.getElementById('bookModal').classList.remove('hidden');
         }
 
-        // 모달 닫기
         function closeBookModal() {
-            document.getElementById('bookModal').classList.remove('active');
+            document.getElementById('bookModal').classList.add('hidden');
         }
 
-        // 책 검색
         async function searchBooks() {
             const query = document.getElementById('bookSearch').value;
             if (!query.trim()) {
@@ -397,19 +144,19 @@
                 if (data.documents && data.documents.length > 0) {
                     data.documents.forEach(book => {
                         const bookItem = document.createElement('div');
-                        bookItem.className = 'book-item';
+                        bookItem.className = 'flex gap-4 p-4 border-2 border-gray-200 rounded-lg cursor-pointer transition-all hover:border-green-500 hover:bg-gray-50';
                         bookItem.onclick = () => selectBook(book);
                         bookItem.innerHTML = `
-                            <img src="${book.thumbnail}" alt="${book.title}">
-                            <div class="book-item-info">
-                                <div class="book-item-title">${book.title}</div>
-                                <div class="book-item-author">${book.authors.join(', ')}</div>
+                            <img src="${book.thumbnail}" alt="${book.title}" class="w-15 h-21 object-cover rounded">
+                            <div class="flex-1">
+                                <div class="font-semibold mb-1">${book.title}</div>
+                                <div class="text-gray-600 text-sm">${book.authors.join(', ')}</div>
                             </div>
                         `;
                         bookList.appendChild(bookItem);
                     });
                 } else {
-                    bookList.innerHTML = '<p>검색 결과가 없습니다.</p>';
+                    bookList.innerHTML = '<p class="text-gray-500">검색 결과가 없습니다.</p>';
                 }
             } catch (error) {
                 console.error('검색 오류:', error);
@@ -417,7 +164,6 @@
             }
         }
 
-        // 책 선택
         function selectBook(book) {
             selectedBook = {
                 title: book.title,
@@ -429,12 +175,12 @@
             document.getElementById('selectedBookTitle').textContent = selectedBook.title;
             document.getElementById('selectedBookAuthor').textContent = selectedBook.author;
             document.getElementById('selectedBookThumbnail').src = selectedBook.thumbnail;
-            document.getElementById('selectedBook').classList.add('active');
+            document.getElementById('selectedBook').classList.remove('hidden');
+            document.getElementById('selectedBook').classList.add('flex');
 
             closeBookModal();
         }
 
-        // 리뷰 제출
         async function submitReview() {
             const title = document.getElementById('reviewTitle').value;
             const quote = document.getElementById('quote').value;
@@ -500,12 +246,12 @@
             }
         }
 
-        // 엔터키로 검색
         document.getElementById('bookSearch').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 searchBooks();
             }
         });
     </script>
+    <script th:replace="~{layout :: mobileMenuScript}"></script>
 </body>
 </html>

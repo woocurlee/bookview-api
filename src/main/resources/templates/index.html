@@ -1,393 +1,70 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BookView - 책 리뷰 플랫폼</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<head th:replace="~{layout :: head('BookView - 책 리뷰 플랫폼')}"></head>
+<style>
+    .review-quote {
+        background: #f0f0f0;
+        border-left: 4px solid #10b981;
+        padding: 12px 16px;
+        margin-bottom: 10px;
+        font-style: italic;
+        color: #555;
+        border-radius: 4px;
+    }
+</style>
+<body class="bg-gradient-to-br from-emerald-500 to-green-600 min-h-screen mb-10">
+    <header th:replace="~{layout :: header}"></header>
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #555555;
-            /*background: #D0F5D1;*/
-            min-height: 100vh;
-            color: #333;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        header {
-            background: white;
-            padding: 20px 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
-        }
-
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            font-size: 28px;
-            font-weight: bold;
-            color: #3B8C6E;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .user-profile {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .user-profile img {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-        }
-
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-            text-decoration: none;
-            display: inline-block;
-            transition: all 0.3s;
-        }
-
-        .btn-primary {
-            background: #3B8C6E;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #2a6550;
-        }
-
-        .btn-secondary {
-            background: #e0e0e0;
-            color: #333;
-        }
-
-        .btn-secondary:hover {
-            background: #d0d0d0;
-        }
-
-        .hero {
-            background: white;
-            border-radius: 15px;
-            padding: 60px 40px;
-            text-align: center;
-            margin-bottom: 40px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-        }
-
-        .hero h1 {
-            font-size: 48px;
-            color: #667eea;
-            margin-bottom: 20px;
-        }
-
-        .hero p {
-            font-size: 18px;
-            color: #666;
-            margin-bottom: 30px;
-        }
-
-        /* 리뷰 작성 유도 박스 */
-        .write-prompt-box {
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 30px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-            display: flex;
-            gap: 15px;
-            align-items: center;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .write-prompt-box:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-        }
-
-        .write-prompt-box img {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-
-        .write-prompt-box .placeholder {
-            flex: 1;
-            padding: 12px 20px;
-            background: #f5f5f5;
-            border-radius: 25px;
-            color: #999;
-            font-size: 16px;
-        }
-
-        .write-prompt-box .icon-placeholder {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            color: white;
-        }
-
-        .search-box {
-            display: flex;
-            max-width: 600px;
-            margin: 0 auto;
-            gap: 10px;
-        }
-
-        .search-box input {
-            flex: 1;
-            padding: 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 16px;
-        }
-
-        .search-box input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .books-section {
-            background: white;
-            border-radius: 15px;
-            padding: 40px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-        }
-
-        .section-title {
-            font-size: 28px;
-            margin-bottom: 30px;
-            color: #333;
-        }
-
-        .books-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 20px;
-        }
-
-        .book-card {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-
-        .book-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-
-        .book-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 10px;
-            color: #333;
-        }
-
-        .book-author {
-            color: #666;
-            margin-bottom: 10px;
-        }
-
-        .book-year {
-            color: #999;
-            font-size: 14px;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #999;
-        }
-
-        .empty-state-icon {
-            font-size: 64px;
-            margin-bottom: 20px;
-        }
-
-        /* 리뷰 카드 스타일 */
-        .reviews-section {
-            background: white;
-            border-radius: 15px;
-            padding: 40px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-            margin-top: 30px;
-        }
-
-        .review-card {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 10px;
-            margin-bottom: 20px;
-            transition: transform 0.3s, box-shadow 0.3s;
-            display: flex;
-            gap: 20px;
-        }
-
-        .review-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-
-        .review-book-thumbnail {
-            width: 80px;
-            height: 110px;
-            object-fit: cover;
-            border-radius: 8px;
-            flex-shrink: 0;
-        }
-
-        .review-content {
-            flex: 1;
-        }
-
-        .review-title {
-            font-size: 20px;
-            font-weight: bold;
-            margin-bottom: 8px;
-            color: #333;
-        }
-
-        .review-book-info {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 10px;
-        }
-
-        .review-rating {
-            color: #ffd700;
-            margin-bottom: 10px;
-        }
-
-        .review-quote {
-            background: #f0f0f0;
-            border-left: 4px solid #667eea;
-            padding: 12px 16px;
-            margin-bottom: 10px;
-            font-style: italic;
-            color: #555;
-            border-radius: 4px;
-        }
-
-        .review-text {
-            color: #555;
-            line-height: 1.6;
-            margin-bottom: 10px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-        }
-
-        .review-date {
-            font-size: 12px;
-            color: #999;
-        }
-    </style>
-</head>
-<body>
-    <header>
-        <div class="container">
-            <div class="header-content">
-                <div class="logo">📚 BookView</div>
-                <div class="user-info">
-                    <div sec:authorize="isAuthenticated()" th:if="${user != null}">
-                        <div class="user-profile">
-                            <a href="/write-review" class="btn btn-primary">리뷰 작성</a>
-                            <img th:src="${user.profileImageUrl}" alt="프로필" th:if="${user.profileImageUrl}">
-                            <span th:text="${user.nickname}">사용자</span>
-                            <a href="/logout" class="btn btn-secondary">로그아웃</a>
-                        </div>
-                    </div>
-                    <div sec:authorize="isAnonymous()">
-                        <a href="/oauth2/authorization/google" class="btn btn-primary">구글 로그인</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <div class="container">
+    <div class="max-w-7xl mx-auto px-5">
         <!-- 리뷰 작성 유도 박스 -->
-        <div class="write-prompt-box" onclick="goToWriteReview()" sec:authorize="isAuthenticated()" th:if="${user != null}">
-            <img th:src="${user.profileImageUrl}" alt="프로필" th:if="${user.profileImageUrl}">
-            <div class="icon-placeholder" th:unless="${user.profileImageUrl}">✏️</div>
-            <div class="placeholder">오늘 읽은 책에 대한 생각을 공유해보세요...</div>
+        <div sec:authorize="isAuthenticated()" th:if="${user != null}"
+             onclick="goToWriteReview()"
+             class="bg-white rounded-2xl p-5 mb-8 shadow-lg flex gap-4 items-center cursor-pointer transition-all hover:-translate-y-1 hover:shadow-xl">
+            <img th:src="${user.profileImageUrl}" alt="프로필" th:if="${user.profileImageUrl}" class="w-12 h-12 rounded-full object-cover">
+            <div th:unless="${user.profileImageUrl}" class="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center text-2xl text-white">✏️</div>
+            <div class="flex-1 py-3 px-5 bg-gray-100 rounded-full text-gray-400 text-base">오늘 읽은 책에 대한 생각을 공유해보세요...</div>
         </div>
 
-        <section class="reviews-section" th:if="${reviews != null && !reviews.isEmpty()}">
+        <!-- 최근 리뷰 섹션 -->
+        <section th:if="${reviews != null && !reviews.isEmpty()}">
             <div id="reviewsContainer" th:each="review : ${reviews}">
-                <div class="review-card">
+                <div class="bg-gray-50 rounded-xl p-5 mb-5 transition-all hover:-translate-y-1 hover:shadow-lg flex gap-5">
                     <img th:src="${review.bookThumbnail}"
                          alt="책 표지"
-                         class="review-book-thumbnail"
-                         th:if="${review.bookThumbnail != null && !review.bookThumbnail.isEmpty()}">
-                    <div class="review-content">
-                        <div class="review-title" th:text="${review.title}">리뷰 제목</div>
-                        <div class="review-book-info">
+                         th:if="${review.bookThumbnail != null && !review.bookThumbnail.isEmpty()}"
+                         class="h-48 object-cover rounded-lg flex-shrink-0">
+                    <div class="flex-1">
+                        <div class="text-xl font-bold mb-2 text-gray-800" th:text="${review.title}">리뷰 제목</div>
+                        <div class="text-sm text-gray-600 mb-2.5">
                             <span th:text="${review.bookTitle}">책 제목</span> -
                             <span th:text="${review.bookAuthor}">저자</span>
                         </div>
-                        <div class="review-rating">
+                        <div class="text-yellow-400 mb-2.5">
                             <span th:each="i : ${#numbers.sequence(1, review.rating)}">★</span>
                             <span th:if="${review.rating < 5}" th:each="i : ${#numbers.sequence(review.rating + 1, 5)}">☆</span>
                         </div>
                         <div class="review-quote" th:if="${review.quote != null && !review.quote.isEmpty()}">
                             "<span th:text="${review.quote}"></span>"
                         </div>
-                        <div class="review-text" th:utext="${review.content}">리뷰 내용...</div>
-                        <div class="review-date"
+                        <div class="text-gray-700 leading-relaxed mb-2.5 overflow-hidden line-clamp-3" th:utext="${review.content}">리뷰 내용...</div>
+                        <div class="text-xs text-gray-400"
                              th:text="${#temporals.format(review.createdAt, 'yyyy-MM-dd HH:mm')}">
                             2024-12-24 10:00
                         </div>
                     </div>
                 </div>
             </div>
-            <div id="loading" style="text-align: center; padding: 20px; display: none;">
+            <div id="loading" class="text-center p-5 hidden">
                 <p>로딩 중...</p>
             </div>
-            <div id="endMessage" style="text-align: center; padding: 20px; color: #999; display: none;">
+            <div id="endMessage" class="text-center p-5 text-gray-400 hidden">
                 <p>모든 리뷰를 불러왔습니다.</p>
             </div>
         </section>
     </div>
 
     <script>
-        let currentPage = 1; // 첫 페이지는 서버에서 렌더링되므로 1부터 시작
+        let currentPage = 1;
         let isLoading = false;
         let hasMore = /*[[${hasMoreReviews}]]*/ true;
 
@@ -413,7 +90,10 @@
             if (isLoading || !hasMore) return;
 
             isLoading = true;
-            document.getElementById('loading').style.display = 'block';
+            document.getElementById('loading').classList.remove('hidden');
+
+            // 현재 스크롤 위치 저장
+            const scrollHeight = document.documentElement.scrollHeight;
 
             try {
                 const response = await fetch(`/api/reviews?page=${currentPage}&size=10`);
@@ -427,24 +107,28 @@
                     });
                     currentPage++;
                     hasMore = data.hasMore;
+
+                    // 스크롤 위치 조정
+                    const newScrollHeight = document.documentElement.scrollHeight;
+                    window.scrollTo(0, window.scrollY + (newScrollHeight - scrollHeight));
                 } else {
                     hasMore = false;
                 }
 
                 if (!hasMore) {
-                    document.getElementById('endMessage').style.display = 'block';
+                    document.getElementById('endMessage').classList.remove('hidden');
                 }
             } catch (error) {
                 console.error('리뷰 로딩 실패:', error);
             } finally {
                 isLoading = false;
-                document.getElementById('loading').style.display = 'none';
+                document.getElementById('loading').classList.add('hidden');
             }
         }
 
         function createReviewCard(review) {
             const thumbnail = review.bookThumbnail
-                ? `<img src="${review.bookThumbnail}" alt="책 표지" class="review-book-thumbnail">`
+                ? `<img src="${review.bookThumbnail}" alt="책 표지" class="w-20 h-28 object-cover rounded-lg flex-shrink-0">`
                 : '';
 
             const stars = '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating);
@@ -454,18 +138,18 @@
                 : '';
 
             return `
-                <div class="review-card">
+                <div class="bg-gray-50 rounded-xl p-5 mb-5 transition-all hover:-translate-y-1 hover:shadow-lg flex gap-5">
                     ${thumbnail}
-                    <div class="review-content">
-                        <div class="review-title">${review.title}</div>
-                        <div class="review-book-info">
+                    <div class="flex-1">
+                        <div class="text-xl font-bold mb-2 text-gray-800">${review.title}</div>
+                        <div class="text-sm text-gray-600 mb-2.5">
                             <span>${review.bookTitle}</span> -
                             <span>${review.bookAuthor}</span>
                         </div>
-                        <div class="review-rating">${stars}</div>
+                        <div class="text-yellow-400 mb-2.5">${stars}</div>
                         ${quote}
-                        <div class="review-text">${review.content}</div>
-                        <div class="review-date">${new Date(review.createdAt).toLocaleString('ko-KR')}</div>
+                        <div class="text-gray-700 leading-relaxed mb-2.5 overflow-hidden line-clamp-3">${review.content}</div>
+                        <div class="text-xs text-gray-400">${new Date(review.createdAt).toLocaleString('ko-KR')}</div>
                     </div>
                 </div>
             `;
@@ -484,5 +168,6 @@
             }, 100);
         });
     </script>
+    <script th:replace="~{layout :: mobileMenuScript}"></script>
 </body>
 </html>

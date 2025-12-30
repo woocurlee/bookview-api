@@ -6,7 +6,6 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
-import org.springframework.security.oauth2.core.user.OAuth2User
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -40,18 +39,20 @@ class ReviewController(
 
     @GetMapping("/my")
     fun getMyReviews(
-        @AuthenticationPrincipal oauth2User: OAuth2User,
+        @AuthenticationPrincipal principal: Any,
     ): ResponseEntity<List<Review>> {
-        val googleId = oauth2User.attributes["sub"].toString()
+        val attributes = principal as Map<*, *>
+        val googleId = attributes["sub"].toString()
         return ResponseEntity.ok(reviewService.getReviewsByUserId(googleId))
     }
 
     @PostMapping
     fun createReview(
         @RequestBody request: CreateReviewRequest,
-        @AuthenticationPrincipal oauth2User: OAuth2User,
+        @AuthenticationPrincipal principal: Any,
     ): ResponseEntity<Review> {
-        val googleId = oauth2User.attributes["sub"].toString()
+        val attributes = principal as Map<*, *>
+        val googleId = attributes["sub"].toString()
         val review =
             Review(
                 userId = googleId,

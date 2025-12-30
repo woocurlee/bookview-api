@@ -18,7 +18,7 @@
                 <div sec:authorize="isAuthenticated()" th:if="${user != null}">
                     <div class="flex items-center gap-4">
                         <a href="/write-review" class="px-5 py-2.5 bg-emerald-500 text-white rounded-md hover:bg-emerald-600 transition-colors">리뷰 작성</a>
-                        <img th:src="${user.profileImageUrl}" alt="프로필" th:if="${user.profileImageUrl}" class="w-10 h-10 rounded-full">
+                        <img src="/images/default-avatar.svg" alt="프로필" class="w-10 h-10 rounded-full">
                         <span th:text="${user.nickname}">사용자</span>
                         <a href="/logout" class="px-5 py-2.5 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors">로그아웃</a>
                     </div>
@@ -36,7 +36,7 @@
             <button onclick="toggleMobileMenu()" class="self-end text-3xl text-gray-500 hover:text-gray-700">×</button>
             <div sec:authorize="isAuthenticated()" th:if="${user != null}">
                 <div class="flex items-center gap-3 pb-4 border-b border-gray-200">
-                    <img th:src="${user.profileImageUrl}" alt="프로필" th:if="${user.profileImageUrl}" class="w-12 h-12 rounded-full">
+                    <img src="/images/default-avatar.svg" alt="프로필" class="w-12 h-12 rounded-full">
                     <span th:text="${user.nickname}" class="font-semibold text-lg">사용자</span>
                 </div>
                 <a href="/my-reviews" class="block py-4 px-4 text-gray-700 hover:bg-emerald-50 rounded-md mt-2">📚 내 기록보기</a>

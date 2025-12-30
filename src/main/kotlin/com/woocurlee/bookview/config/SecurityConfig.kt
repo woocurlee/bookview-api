@@ -5,20 +5,26 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
+import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 
 @Configuration
 @EnableWebSecurity
 class SecurityConfig(
     private val customOAuth2UserService: CustomOAuth2UserService,
     private val authorizationRequestResolver: OAuth2AuthorizationRequestResolver,
+    private val jwtAuthenticationFilter: JwtAuthenticationFilter,
+    private val oAuth2SuccessHandler: OAuth2SuccessHandler,
 ) {
     @Bean
     fun filterChain(http: HttpSecurity): SecurityFilterChain {
         http
             .csrf { it.disable() }
-            .authorizeHttpRequests { auth ->
+            .sessionManagement { session ->
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            }.authorizeHttpRequests { auth ->
                 auth
                     .requestMatchers(
                         "/",
@@ -30,7 +36,7 @@ class SecurityConfig(
                         "/js/**",
                         "/images/**",
                     ).permitAll()
-                    .requestMatchers("/api/users", "/api/users/db-info", "/api/external/**")
+                    .requestMatchers("/api/users", "/api/users/db-info", "/api/external/**", "/api/reviews")
                     .permitAll()
                     .requestMatchers("/api/**")
                     .authenticated()
@@ -42,12 +48,13 @@ class SecurityConfig(
                         authorization.authorizationRequestResolver(authorizationRequestResolver)
                     }.userInfoEndpoint { userInfo ->
                         userInfo.userService(customOAuth2UserService)
-                    }.defaultSuccessUrl("/", true)
+                    }.successHandler(oAuth2SuccessHandler)
             }.logout { logout ->
                 logout
                     .logoutSuccessUrl("/")
+                    .deleteCookies("jwt")
                     .permitAll()
-            }
+            }.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
 
         return http.build()
     }

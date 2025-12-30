@@ -1,11 +1,13 @@
 // Quill Editor 초기화
 const quill = new Quill('#editor', {
     theme: 'snow',
+    placeholder: '책을 읽으며 느낀 점을 자유롭게 작성해보세요...',
     modules: {
         toolbar: [
             [{ 'header': [1, 2, 3, false] }],
-            ['bold', 'italic', 'underline'],
+            ['bold', 'italic', 'underline', 'strike'],
             [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+            ['blockquote', 'code-block'],
             ['link'],
             ['clean']
         ]
@@ -14,6 +16,10 @@ const quill = new Quill('#editor', {
 
 let selectedRating = 0;
 let selectedBook = null;
+let currentBookPage = 1;
+let currentBookQuery = '';
+let isLoadingBooks = false;
+let hasMoreBooks = true;
 
 document.addEventListener('DOMContentLoaded', function() {
     // 명언 글자수 카운터
@@ -27,6 +33,18 @@ document.addEventListener('DOMContentLoaded', function() {
             searchBooks();
         }
     });
+
+    // 모달 스크롤 이벤트 - 무한 스크롤
+    const bookModal = document.getElementById('bookModal');
+    const modalContent = bookModal?.querySelector('.overflow-y-auto');
+
+    if (modalContent) {
+        modalContent.addEventListener('scroll', function() {
+            if (this.scrollHeight - this.scrollTop - this.clientHeight < 100) {
+                searchBooks(true);
+            }
+        });
+    }
 });
 
 // 별점 설정
@@ -45,56 +63,99 @@ function setRating(rating) {
 // 모달 열기
 function openBookModal() {
     document.getElementById('bookModal').classList.remove('hidden');
+    currentBookPage = 1;
+    currentBookQuery = '';
+    hasMoreBooks = true;
+    document.getElementById('bookList').innerHTML = '';
 }
 
 // 모달 닫기
 function closeBookModal() {
     document.getElementById('bookModal').classList.add('hidden');
+    // 검색어 및 결과 초기화
+    document.getElementById('bookSearch').value = '';
+    document.getElementById('bookList').innerHTML = '';
+    currentBookPage = 1;
+    currentBookQuery = '';
+    hasMoreBooks = true;
+    isLoadingBooks = false;
 }
 
-// 책 검색
-async function searchBooks() {
+// 모달 바깥 클릭 시 닫기
+function handleModalClick(event) {
+    if (event.target.id === 'bookModal') {
+        closeBookModal();
+    }
+}
+
+// 책 검색 (무한 스크롤 지원)
+async function searchBooks(loadMore = false) {
     const query = document.getElementById('bookSearch').value;
     if (!query.trim()) {
         alert('검색어를 입력하세요');
         return;
     }
 
+    // 새로운 검색이면 초기화
+    if (!loadMore || query !== currentBookQuery) {
+        currentBookQuery = query;
+        currentBookPage = 1;
+        hasMoreBooks = true;
+        document.getElementById('bookList').innerHTML = '';
+    }
+
+    if (isLoadingBooks || !hasMoreBooks) return;
+
     const bookList = document.getElementById('bookList');
     const loading = document.getElementById('bookLoading');
 
-    // 로딩 표시
-    bookList.innerHTML = '';
+    isLoadingBooks = true;
     loading.classList.remove('hidden');
 
     try {
-        const response = await fetch(`/api/external/books/search?query=${encodeURIComponent(query)}`);
+        const response = await fetch(`/api/external/books/search?query=${encodeURIComponent(currentBookQuery)}&page=${currentBookPage}&size=10`);
         const data = await response.json();
 
-        // 로딩 숨김
         loading.classList.add('hidden');
+        isLoadingBooks = false;
 
         if (data.documents && data.documents.length > 0) {
             data.documents.forEach(book => {
                 const bookItem = document.createElement('div');
-                bookItem.className = 'flex gap-4 p-4 border-2 border-gray-200 rounded-lg cursor-pointer transition-all hover:border-green-500 hover:bg-gray-50';
+                bookItem.className = 'flex flex-col p-4 border-2 border-gray-200 rounded-lg cursor-pointer transition-all hover:border-green-500 hover:bg-gray-50';
                 bookItem.onclick = () => selectBook(book);
                 bookItem.innerHTML = `
-                    <img src="${book.thumbnail}" alt="${book.title}" class="w-15 h-21 object-cover rounded">
+                    <img src="${book.thumbnail}" alt="${book.title}" class="w-full h-48 object-contain rounded mb-3">
                     <div class="flex-1">
-                        <div class="font-semibold mb-1">${book.title}</div>
-                        <div class="text-gray-600 text-sm">${book.authors.join(', ')}</div>
+                        <div class="font-semibold mb-1 line-clamp-2">${book.title}</div>
+                        <div class="text-gray-600 text-sm line-clamp-1">${book.authors.join(', ')}</div>
                     </div>
                 `;
                 bookList.appendChild(bookItem);
             });
+
+            currentBookPage++;
+
+            if (data.meta && data.meta.is_end) {
+                hasMoreBooks = false;
+                const endMessage = document.createElement('p');
+                endMessage.className = 'text-center text-gray-500 py-4 col-span-full';
+                endMessage.textContent = '모든 검색 결과를 불러왔습니다.';
+                bookList.appendChild(endMessage);
+            }
         } else {
-            bookList.innerHTML = '<p class="text-gray-500">검색 결과가 없습니다.</p>';
+            if (currentBookPage === 1) {
+                bookList.innerHTML = '<p class="text-gray-500 col-span-full text-center">검색 결과가 없습니다.</p>';
+            }
+            hasMoreBooks = false;
         }
     } catch (error) {
         console.error('검색 오류:', error);
         loading.classList.add('hidden');
-        bookList.innerHTML = '<p class="text-red-500">검색에 실패했습니다. 다시 시도해주세요.</p>';
+        isLoadingBooks = false;
+        if (currentBookPage === 1) {
+            bookList.innerHTML = '<p class="text-red-500">검색에 실패했습니다. 다시 시도해주세요.</p>';
+        }
     }
 }
 

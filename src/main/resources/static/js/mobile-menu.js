@@ -11,3 +11,11 @@ function toggleMobileMenu() {
         overlay.classList.add('hidden');
     }
 }
+
+function openLogoutModal() {
+    document.getElementById('logoutModal').classList.remove('hidden');
+}
+
+function closeLogoutModal() {
+    document.getElementById('logoutModal').classList.add('hidden');
+}

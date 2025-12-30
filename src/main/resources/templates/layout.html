@@ -20,7 +20,7 @@
                         <a href="/write-review" class="px-5 py-2.5 bg-emerald-500 text-white rounded-md hover:bg-emerald-600 transition-colors">리뷰 작성</a>
                         <img src="/images/default-avatar.svg" alt="프로필" class="w-10 h-10 rounded-full">
                         <span th:text="${user.nickname}">사용자</span>
-                        <a href="/logout" class="px-5 py-2.5 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors">로그아웃</a>
+                        <button onclick="openLogoutModal()" class="px-5 py-2.5 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors">로그아웃</button>
                     </div>
                 </div>
                 <div th:if="${user == null}">
@@ -31,8 +31,8 @@
         </div>
     </div>
     <div id="mobileMenuOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" onclick="toggleMobileMenu()"></div>
-    <div id="mobileMenu" class="fixed top-0 left-0 h-full w-80 bg-white shadow-xl transform -translate-x-full transition-transform duration-300 z-50 lg:hidden">
-        <div class="p-6 flex flex-col gap-4">
+    <div id="mobileMenu" class="fixed top-0 left-0 h-full w-80 bg-white shadow-xl transform -translate-x-full transition-transform duration-300 z-50 lg:hidden flex flex-col">
+        <div class="p-6 flex flex-col gap-4 flex-1">
             <button onclick="toggleMobileMenu()" class="self-end text-3xl text-gray-500 hover:text-gray-700">×</button>
             <div th:if="${user != null}">
                 <div class="flex items-center gap-3 pb-4 border-b border-gray-200">
@@ -41,10 +41,29 @@
                 </div>
                 <a href="/my-reviews" class="block py-4 px-4 text-gray-700 hover:bg-emerald-50 rounded-md mt-2">📚 내 기록보기</a>
                 <a href="/write-review" class="block py-4 px-4 text-gray-700 hover:bg-emerald-50 rounded-md">✏️ 글쓰기</a>
-                <a href="/logout" class="block py-4 px-4 text-gray-700 hover:bg-gray-50 rounded-md">🚪 로그아웃</a>
             </div>
             <div th:if="${user == null}">
                 <a href="/oauth2/authorization/google" class="block py-4 px-4 bg-emerald-500 text-white text-center rounded-md hover:bg-emerald-600">구글 로그인</a>
+            </div>
+        </div>
+        <!-- 로그아웃 버튼 (하단 고정) -->
+        <div th:if="${user != null}" class="p-6 border-t border-gray-200">
+            <button onclick="openLogoutModal()" class="w-full block py-4 px-4 text-center text-red-600 hover:bg-red-50 rounded-md font-semibold">🚪 로그아웃</button>
+        </div>
+    </div>
+
+    <!-- 로그아웃 확인 모달 -->
+    <div id="logoutModal" class="hidden fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 z-[60] flex justify-center items-center">
+        <div class="bg-white rounded-2xl p-8 max-w-sm w-11/12 shadow-2xl">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">로그아웃</h2>
+            <p class="text-gray-600 mb-6">정말 로그아웃 하시겠습니까?</p>
+            <div class="flex gap-3">
+                <button onclick="closeLogoutModal()" class="flex-1 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors font-semibold">
+                    취소
+                </button>
+                <a href="/logout" class="flex-1 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-semibold text-center">
+                    로그아웃
+                </a>
             </div>
         </div>
     </div>

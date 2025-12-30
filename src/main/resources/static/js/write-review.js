@@ -60,12 +60,19 @@ async function searchBooks() {
         return;
     }
 
+    const bookList = document.getElementById('bookList');
+    const loading = document.getElementById('bookLoading');
+
+    // 로딩 표시
+    bookList.innerHTML = '';
+    loading.classList.remove('hidden');
+
     try {
         const response = await fetch(`/api/external/books/search?query=${encodeURIComponent(query)}`);
         const data = await response.json();
 
-        const bookList = document.getElementById('bookList');
-        bookList.innerHTML = '';
+        // 로딩 숨김
+        loading.classList.add('hidden');
 
         if (data.documents && data.documents.length > 0) {
             data.documents.forEach(book => {
@@ -86,7 +93,8 @@ async function searchBooks() {
         }
     } catch (error) {
         console.error('검색 오류:', error);
-        alert('책 검색에 실패했습니다.');
+        loading.classList.add('hidden');
+        bookList.innerHTML = '<p class="text-red-500">검색에 실패했습니다. 다시 시도해주세요.</p>';
     }
 }
 

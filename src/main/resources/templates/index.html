@@ -17,7 +17,7 @@
 
     <div class="max-w-7xl mx-auto px-5">
         <!-- 리뷰 작성 유도 박스 -->
-        <div sec:authorize="isAuthenticated()" th:if="${user != null}"
+        <div th:if="${user != null}"
              onclick="goToWriteReview()"
              class="bg-white rounded-2xl p-5 mb-8 shadow-lg flex gap-4 items-center cursor-pointer transition-all hover:-translate-y-1 hover:shadow-xl">
             <img src="/images/default-avatar.svg" alt="프로필" class="w-12 h-12 rounded-full object-cover">

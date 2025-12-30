@@ -46,5 +46,18 @@ class ViewController(
     }
 
     @GetMapping("/write-review")
-    fun writeReview(): String = "write-review"
+    fun writeReview(
+        model: Model,
+        @AuthenticationPrincipal principal: Any?,
+    ): String {
+        if (principal != null) {
+            val attributes = principal as? Map<*, *>
+            val googleId = attributes?.get("sub")?.toString()
+            if (googleId != null) {
+                val user = userRepository.findByGoogleId(googleId)
+                model.addAttribute("user", user)
+            }
+        }
+        return "write-review"
+    }
 }

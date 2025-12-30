@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<header th:fragment="header" class="bg-white shadow-md mb-8">
+<header th:fragment="header" class="bg-white shadow-md mb-8 relative z-30">
     <div class="max-w-7xl mx-auto px-5 py-5">
         <div class="flex justify-between items-center">
             <button onclick="toggleMobileMenu()" class="lg:hidden text-3xl text-emerald-600 focus:outline-none z-50 relative">
@@ -15,7 +15,7 @@
             </button>
             <a href="/" class="text-3xl font-bold text-emerald-600 no-underline lg:block absolute left-1/2 transform -translate-x-1/2 lg:static lg:transform-none">📚 BookView</a>
             <div class="hidden lg:flex items-center gap-4">
-                <div sec:authorize="isAuthenticated()" th:if="${user != null}">
+                <div th:if="${user != null}">
                     <div class="flex items-center gap-4">
                         <a href="/write-review" class="px-5 py-2.5 bg-emerald-500 text-white rounded-md hover:bg-emerald-600 transition-colors">리뷰 작성</a>
                         <img src="/images/default-avatar.svg" alt="프로필" class="w-10 h-10 rounded-full">
@@ -23,7 +23,7 @@
                         <a href="/logout" class="px-5 py-2.5 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition-colors">로그아웃</a>
                     </div>
                 </div>
-                <div sec:authorize="isAnonymous()">
+                <div th:if="${user == null}">
                     <a href="/oauth2/authorization/google" class="px-5 py-2.5 bg-emerald-500 text-white rounded-md hover:bg-emerald-600 transition-colors">구글 로그인</a>
                 </div>
             </div>
@@ -34,7 +34,7 @@
     <div id="mobileMenu" class="fixed top-0 left-0 h-full w-80 bg-white shadow-xl transform -translate-x-full transition-transform duration-300 z-50 lg:hidden">
         <div class="p-6 flex flex-col gap-4">
             <button onclick="toggleMobileMenu()" class="self-end text-3xl text-gray-500 hover:text-gray-700">×</button>
-            <div sec:authorize="isAuthenticated()" th:if="${user != null}">
+            <div th:if="${user != null}">
                 <div class="flex items-center gap-3 pb-4 border-b border-gray-200">
                     <img src="/images/default-avatar.svg" alt="프로필" class="w-12 h-12 rounded-full">
                     <span th:text="${user.nickname}" class="font-semibold text-lg">사용자</span>
@@ -43,7 +43,7 @@
                 <a href="/write-review" class="block py-4 px-4 text-gray-700 hover:bg-emerald-50 rounded-md">✏️ 글쓰기</a>
                 <a href="/logout" class="block py-4 px-4 text-gray-700 hover:bg-gray-50 rounded-md">🚪 로그아웃</a>
             </div>
-            <div sec:authorize="isAnonymous()">
+            <div th:if="${user == null}">
                 <a href="/oauth2/authorization/google" class="block py-4 px-4 bg-emerald-500 text-white text-center rounded-md hover:bg-emerald-600">구글 로그인</a>
             </div>
         </div>

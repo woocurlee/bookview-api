@@ -2,15 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head th:replace="~{layout :: head('도서 목록 - BookView')}"></head>
 <body class="bg-gradient-to-br from-emerald-500 to-green-600 min-h-screen">
-    <!-- Header -->
-    <header class="bg-white shadow-md mb-8">
-        <div class="max-w-7xl mx-auto px-5 py-5">
-            <div class="flex justify-between items-center">
-                <a href="/" class="text-3xl font-bold text-emerald-600 no-underline">📚 BookView</a>
-                <a href="/" class="px-5 py-2.5 bg-gray-200 text-gray-800 rounded-md no-underline transition-colors hover:bg-gray-300">홈으로</a>
-            </div>
-        </div>
-    </header>
+    <header th:replace="~{layout :: header}"></header>
 
     <div class="max-w-7xl mx-auto px-5">
         <section class="bg-white rounded-2xl p-10 shadow-lg">

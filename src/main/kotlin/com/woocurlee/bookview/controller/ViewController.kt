@@ -60,4 +60,31 @@ class ViewController(
         }
         return "write-review"
     }
+
+    @GetMapping("/my-page")
+    fun myPage(
+        model: Model,
+        @AuthenticationPrincipal principal: Any?,
+    ): String {
+        if (principal == null) {
+            return "redirect:/oauth2/authorization/google"
+        }
+
+        val attributes = principal as? Map<*, *>
+        val googleId = attributes?.get("sub")?.toString()
+        if (googleId != null) {
+            val user = userRepository.findByGoogleId(googleId)
+            model.addAttribute("user", user)
+
+            // 내가 쓴 리뷰 가져오기
+            val myReviews = reviewService.getReviewsByUserId(googleId)
+            model.addAttribute("myReviews", myReviews)
+
+            // 평균 별점 계산
+            val avgRating = if (myReviews.isEmpty()) 0.0 else myReviews.map { it.rating }.average()
+            model.addAttribute("avgRating", String.format("%.1f", avgRating))
+        }
+
+        return "my-page"
+    }
 }

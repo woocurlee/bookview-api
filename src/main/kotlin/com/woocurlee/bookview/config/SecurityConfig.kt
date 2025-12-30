@@ -35,13 +35,14 @@ class SecurityConfig(
                         "/css/**",
                         "/js/**",
                         "/images/**",
+                        "/error",
                     ).permitAll()
                     .requestMatchers("/api/users", "/api/users/db-info", "/api/external/**", "/api/reviews")
                     .permitAll()
                     .requestMatchers("/api/**")
                     .authenticated()
                     .anyRequest()
-                    .authenticated()
+                    .permitAll()
             }.oauth2Login { oauth2 ->
                 oauth2
                     .authorizationEndpoint { authorization ->

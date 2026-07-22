@@ -10,6 +10,7 @@ data class UserPageData(
     val reviews: List<Review>,
     val stats: ReviewStats,
     val likedReviewIds: Set<String>,
+    val bookshelf: BookshelfData,
 )
 
 @Service
@@ -17,6 +18,7 @@ class UserPageService(
     private val userService: UserService,
     private val reviewService: ReviewService,
     private val reviewLikeService: ReviewLikeService,
+    private val bookshelfService: BookshelfService,
 ) {
     /**
      * 유저 페이지에 필요한 데이터를 조회한다.
@@ -39,6 +41,7 @@ class UserPageService(
 
         val stats = reviewService.calculateStats(reviews)
         val likedReviewIds = reviewLikeService.getLikedReviewIdsOrEmpty(reviews.mapNotNull { it.id }, currentGoogleId)
+        val bookshelf = bookshelfService.getBookshelf(profileUser.googleId)
 
         return UserPageData(
             profileUser = profileUser,
@@ -46,6 +49,7 @@ class UserPageService(
             reviews = reviews,
             stats = stats,
             likedReviewIds = likedReviewIds,
+            bookshelf = bookshelf,
         )
     }
 }

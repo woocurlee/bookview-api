@@ -1,6 +1,8 @@
 package com.woocurlee.bookview.controller
 
+import com.woocurlee.bookview.domain.BookshelfEntry
 import com.woocurlee.bookview.dto.CommentResponse
+import com.woocurlee.bookview.dto.toView
 import com.woocurlee.bookview.service.CommentService
 import com.woocurlee.bookview.service.ReviewDetail
 import com.woocurlee.bookview.service.ReviewLikeService
@@ -121,6 +123,9 @@ class ViewController(
         model.addAttribute("avgRating", data.stats.avgRating)
         model.addAttribute("totalLikes", data.stats.totalLikes)
         model.addAttribute("likedReviewIds", data.likedReviewIds)
+        model.addAttribute("bookshelfReadingJson", toBookshelfJson(data.bookshelf.reading))
+        model.addAttribute("bookshelfFinishedJson", toBookshelfJson(data.bookshelf.finished))
+        model.addAttribute("bookshelfCount", data.bookshelf.reading.size + data.bookshelf.finished.size)
         model.addAttribute(
             "metaDescription",
             "${data.profileUser.nickname}의 BookView 프로필 - ${data.reviews.size}개의 리뷰, 평균 별점 ${data.stats.avgRating}",
@@ -213,6 +218,12 @@ class ViewController(
 
     @GetMapping("/terms-of-service")
     fun termsOfService(): String = "redirect:/terms-of-service.html"
+
+    /** 책장 항목을 뷰 DTO로 변환해 JSON 문자열로 직렬화한다. (XSS 방지로 `<` 이스케이프) */
+    private fun toBookshelfJson(entries: List<BookshelfEntry>): String =
+        objectMapper
+            .writeValueAsString(entries.map { it.toView() })
+            .replace("<", "\\u003c")
 
     private fun buildJsonLd(detail: ReviewDetail): String {
         val jsonLd =

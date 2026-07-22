@@ -1,89 +1,123 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{layout :: head(${review != null ? '리뷰 수정 - BookView' : '리뷰 작성 - BookView'})}"></head>
-<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<script type="importmap">
+{
+  "imports": {
+    "@tiptap/core": "https://esm.sh/@tiptap/core@2.11.5",
+    "@tiptap/starter-kit": "https://esm.sh/@tiptap/starter-kit@2.11.5",
+    "@tiptap/extension-link": "https://esm.sh/@tiptap/extension-link@2.11.5",
+    "@tiptap/extension-placeholder": "https://esm.sh/@tiptap/extension-placeholder@2.11.5"
+  }
+}
+</script>
 <style>
-    /* Quill 에디터 커스텀 스타일 */
-    #editor-container {
-        min-height: 200px;
-        margin-bottom: 10px;
-    }
-    @media (min-width: 768px) {
-        #editor-container {
-            height: 280px;
-        }
+    /* 별점 */
+    .star.active {
+        color: #ffd700;
     }
 
-    .ql-toolbar.ql-snow {
+    /* TipTap 에디터 */
+    .editor-wrap {
         border: 2px solid #e5e7eb;
-        border-bottom: none;
-        border-radius: 8px 8px 0 0;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #fff;
+    }
+    #editorToolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        padding: 8px;
         background: #f9fafb;
-        padding: 12px;
+        border-bottom: 2px solid #e5e7eb;
+    }
+    #editorToolbar button {
+        min-width: 38px;
+        height: 38px;
+        padding: 0 10px;
+        font-size: 15px;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        background: #fff;
+        color: #6b7280;
+        cursor: pointer;
+        touch-action: manipulation;
+        transition: color .15s, border-color .15s, background .15s;
+    }
+    #editorToolbar button:hover {
+        color: #f59e0b;
+        border-color: #f59e0b;
+    }
+    #editorToolbar button.active {
+        background: #fef3c7;
+        border-color: #f59e0b;
+        color: #b45309;
+    }
+    #editorToolbar .sep {
+        width: 1px;
+        background: #e5e7eb;
+        margin: 4px 2px;
     }
 
-    .ql-container.ql-snow {
-        border: 2px solid #e5e7eb;
-        border-radius: 0 0 8px 8px;
-        font-size: 16px;
-        background: white;
-    }
-
-    .ql-editor {
-        min-height: 160px;
+    .ProseMirror {
+        min-height: 200px;
         padding: 16px;
+        outline: none;
+        font-size: 16px;
+        line-height: 1.7;
+        color: #1c1917;
     }
     @media (min-width: 768px) {
-        .ql-editor {
-            min-height: 220px;
+        .ProseMirror {
+            min-height: 240px;
             padding: 20px;
         }
     }
-
-    .ql-editor.ql-blank::before {
+    .ProseMirror:focus {
+        outline: none;
+    }
+    .ProseMirror > * + * {
+        margin-top: 0.75em;
+    }
+    .ProseMirror h1 { font-size: 1.6em; font-weight: 700; }
+    .ProseMirror h2 { font-size: 1.35em; font-weight: 700; }
+    .ProseMirror h3 { font-size: 1.15em; font-weight: 700; }
+    .ProseMirror blockquote {
+        border-left: 3px solid #d6d3d1;
+        padding-left: 12px;
+        color: #57534e;
+    }
+    .ProseMirror pre {
+        background: #1e1e1e;
+        color: #eee;
+        padding: 12px;
+        border-radius: 8px;
+        overflow-x: auto;
+        font-size: 0.9em;
+    }
+    .ProseMirror code {
+        background: #efeeec;
+        padding: 1px 5px;
+        border-radius: 4px;
+        font-size: 0.9em;
+    }
+    .ProseMirror pre code {
+        background: none;
+        padding: 0;
+        color: inherit;
+    }
+    .ProseMirror a {
+        color: #b45309;
+        text-decoration: underline;
+    }
+    /* placeholder */
+    .ProseMirror p.is-editor-empty:first-child::before {
+        content: attr(data-placeholder);
         color: #9ca3af;
-        font-style: normal;
-        left: 20px;
-        right: 20px;
-    }
-
-    /* 툴바 버튼 스타일 */
-    .ql-toolbar.ql-snow .ql-formats {
-        margin-right: 15px;
-    }
-
-    .ql-snow .ql-stroke {
-        stroke: #6b7280;
-    }
-
-    .ql-snow .ql-fill {
-        fill: #6b7280;
-    }
-
-    .ql-snow .ql-picker-label {
-        color: #6b7280;
-    }
-
-    .ql-toolbar.ql-snow button:hover,
-    .ql-toolbar.ql-snow button:focus,
-    .ql-toolbar.ql-snow button.ql-active {
-        color: #f59e0b;
-    }
-
-    .ql-toolbar.ql-snow button:hover .ql-stroke,
-    .ql-toolbar.ql-snow button:focus .ql-stroke,
-    .ql-toolbar.ql-snow button.ql-active .ql-stroke {
-        stroke: #f59e0b;
-    }
-
-    .ql-toolbar.ql-snow button:hover .ql-fill,
-    .ql-toolbar.ql-snow button:focus .ql-fill,
-    .ql-toolbar.ql-snow button.ql-active .ql-fill {
-        fill: #f59e0b;
-    }
-
-    .star.active {
-        color: #ffd700;
+        float: left;
+        height: 0;
+        pointer-events: none;
     }
 </style>
 <body class="bg-gradient-to-br from-stone-100 to-stone-50 min-h-screen">
@@ -167,7 +201,23 @@
             <!-- 리뷰 내용 -->
             <div class="mb-6">
                 <label class="block mb-2 font-semibold text-stone-800">리뷰 내용 <span class="text-red-500">*</span></label>
-                <div id="editor-container">
+                <div class="editor-wrap">
+                    <div id="editorToolbar">
+                        <button type="button" data-cmd="h1" title="제목1">H1</button>
+                        <button type="button" data-cmd="h2" title="제목2">H2</button>
+                        <button type="button" data-cmd="h3" title="제목3">H3</button>
+                        <button type="button" data-cmd="paragraph" title="본문">본문</button>
+                        <span class="sep"></span>
+                        <button type="button" data-cmd="bold" title="굵게"><b>B</b></button>
+                        <button type="button" data-cmd="italic" title="기울임"><i>I</i></button>
+                        <button type="button" data-cmd="strike" title="취소선"><s>S</s></button>
+                        <span class="sep"></span>
+                        <button type="button" data-cmd="blockquote" title="인용">&ldquo;</button>
+                        <button type="button" data-cmd="code" title="인라인 코드">&lt;/&gt;</button>
+                        <button type="button" data-cmd="codeBlock" title="코드블록">{ }</button>
+                        <span class="sep"></span>
+                        <button type="button" data-cmd="link" title="링크 추가/편집">🔗 링크</button>
+                    </div>
                     <div id="editor"></div>
                 </div>
             </div>
@@ -213,7 +263,6 @@
 
     <footer th:replace="~{layout :: footer}"></footer>
 
-    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
     <script src="/js/common.js"></script>
     <script src="/js/write-review.js"></script>
     <script th:inline="javascript">
@@ -223,6 +272,86 @@
         const reviewNo = /*[[${review != null ? review.reviewNo : 0}]]*/ 0;
         const initialRating = /*[[${review != null ? review.rating : 0}]]*/ 0;
         const initialContent = /*[[${review != null ? review.content : ''}]]*/ '';
+    </script>
+    <script type="module">
+        import { Editor } from '@tiptap/core'
+        import StarterKit from '@tiptap/starter-kit'
+        import Link from '@tiptap/extension-link'
+        import Placeholder from '@tiptap/extension-placeholder'
+
+        const editor = new Editor({
+            element: document.querySelector('#editor'),
+            extensions: [
+                StarterKit.configure({
+                    heading: { levels: [1, 2, 3] },
+                    horizontalRule: false
+                }),
+                Link.configure({ openOnClick: false, autolink: true }),
+                Placeholder.configure({ placeholder: '책을 읽으며 느낀 점을 자유롭게 작성해보세요...' })
+            ],
+            content: ''
+        })
+
+        const toolbar = document.querySelector('#editorToolbar')
+
+        // 핵심: pointerdown에서 preventDefault → 툴바 탭이 에디터 선택을 지우지 않게 (모바일 서식 토글)
+        toolbar.addEventListener('pointerdown', (e) => {
+            const btn = e.target.closest('button[data-cmd]')
+            if (!btn) return
+            e.preventDefault()
+            runCmd(btn.dataset.cmd)
+        })
+
+        function runCmd(c) {
+            const chain = editor.chain().focus()
+            switch (c) {
+                case 'h1': chain.toggleHeading({ level: 1 }).run(); break
+                case 'h2': chain.toggleHeading({ level: 2 }).run(); break
+                case 'h3': chain.toggleHeading({ level: 3 }).run(); break
+                case 'paragraph': chain.setParagraph().run(); break
+                case 'bold': chain.toggleBold().run(); break
+                case 'italic': chain.toggleItalic().run(); break
+                case 'strike': chain.toggleStrike().run(); break
+                case 'blockquote': chain.toggleBlockquote().run(); break
+                case 'code': chain.toggleCode().run(); break
+                case 'codeBlock': chain.toggleCodeBlock().run(); break
+                case 'link': setLink(); break
+            }
+        }
+
+        function setLink() {
+            const prev = editor.getAttributes('link').href || ''
+            const url = window.prompt('링크 URL', prev)
+            if (url === null) return
+            if (url === '') {
+                editor.chain().focus().extendMarkRange('link').unsetLink().run()
+                return
+            }
+            editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
+        }
+
+        // 툴바 버튼 활성 상태 동기화
+        function setActive(cmd, on) {
+            const btn = toolbar.querySelector(`button[data-cmd="${cmd}"]`)
+            if (btn) btn.classList.toggle('active', on)
+        }
+        function refresh() {
+            ['bold', 'italic', 'strike', 'code', 'codeBlock', 'blockquote'].forEach(s => setActive(s, editor.isActive(s)))
+            setActive('h1', editor.isActive('heading', { level: 1 }))
+            setActive('h2', editor.isActive('heading', { level: 2 }))
+            setActive('h3', editor.isActive('heading', { level: 3 }))
+            setActive('link', editor.isActive('link'))
+        }
+        editor.on('selectionUpdate', refresh)
+        editor.on('transaction', refresh)
+        refresh()
+
+        // write-review.js(클래식 스크립트)에서 사용할 API
+        window.reviewEditor = {
+            getHTML: () => editor.getHTML(),
+            getText: () => editor.getText(),
+            setContent: (html) => editor.commands.setContent(html || '', false)
+        }
     </script>
     <script th:replace="~{layout :: mobileMenuScript}"></script>
 </body>

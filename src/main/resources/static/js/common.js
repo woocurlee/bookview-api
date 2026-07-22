@@ -145,11 +145,6 @@ const Validator = {
     textLength(text, min, max) {
         const length = text?.trim().length || 0;
         return length >= min && length <= max;
-    },
-
-    // 리뷰 내용 검증 (Quill 에디터용)
-    quillContent(content) {
-        return content && content.trim() !== '' && content !== '<p><br></p>';
     }
 };
 

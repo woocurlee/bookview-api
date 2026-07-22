@@ -1,20 +1,5 @@
 // 리뷰 작성 페이지 스크립트
-
-// Quill Editor 초기화
-const quill = new Quill('#editor', {
-    theme: 'snow',
-    placeholder: '책을 읽으며 느낀 점을 자유롭게 작성해보세요...',
-    formats: ['header', 'bold', 'italic', 'underline', 'strike', 'blockquote', 'code-block', 'link'],
-    modules: {
-        toolbar: [
-            [{ 'header': [1, 2, 3, false] }],
-            ['bold', 'italic', 'underline', 'strike'],
-            ['blockquote', 'code-block'],
-            ['link'],
-            ['clean']
-        ]
-    }
-});
+// 에디터(TipTap)는 write-review.html의 모듈 스크립트에서 초기화되며 window.reviewEditor로 접근한다.
 
 let selectedRating = 0;
 let selectedBook = null;
@@ -56,9 +41,9 @@ document.addEventListener('DOMContentLoaded', function() {
         selectedRating = initialRating;
         updateStars(initialRating);
 
-        // 에디터 초기 컨텐츠 설정
-        if (initialContent) {
-            quill.root.innerHTML = initialContent.replace(/>\s+</g, '><');
+        // 에디터 초기 컨텐츠 설정 (TipTap, 모듈 스크립트에서 window.reviewEditor 준비됨)
+        if (initialContent && window.reviewEditor) {
+            window.reviewEditor.setContent(initialContent);
         }
 
         // 명언 글자수 초기화
@@ -234,7 +219,7 @@ function selectBook(book) {
 async function submitReview() {
     const title = document.getElementById('reviewTitle').value.trim();
     const quote = document.getElementById('quote').value.trim();
-    const content = quill.root.innerHTML;
+    const content = window.reviewEditor.getHTML();
 
     // 유효성 검사
     if (!title) {
@@ -263,7 +248,8 @@ async function submitReview() {
         return;
     }
 
-    if (!Validator.quillContent(content)) {
+    // 빈 내용 검증: 실제 텍스트 기준으로 판단
+    if (window.reviewEditor.getText().trim().length === 0) {
         Alert.error('리뷰 내용을 입력하세요');
         return;
     }

@@ -53,6 +53,7 @@ class ViewController(
         val reviewsPage = reviewService.getReviews(pageable)
         model.addAttribute("reviews", reviewsPage.content)
         model.addAttribute("hasMoreReviews", reviewsPage.hasNext())
+        model.addAttribute("commentCounts", commentService.getCommentCounts(reviewsPage.content.mapNotNull { it.id }))
         model.addAttribute("canonicalUrl", baseUrl)
 
         val likedReviewIds =

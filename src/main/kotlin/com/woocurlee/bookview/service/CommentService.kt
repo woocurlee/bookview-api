@@ -94,6 +94,10 @@ class CommentService(
         )
     }
 
+    /** 리뷰 목록 표기용: 리뷰별 활성 댓글 수 (reviewId -> count) */
+    fun getCommentCounts(reviewIds: List<String>): Map<String, Long> =
+        reviewIds.associateWith { commentRepository.countByReviewIdAndStatus(it, Status.ACTIVE) }
+
     fun getCommentsByReviewId(reviewId: String): List<CommentResponse> {
         // 모든 댓글 조회 (삭제된 댓글 포함)
         val allComments =

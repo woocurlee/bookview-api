@@ -15,6 +15,10 @@ class UserService(
 ) {
     fun findByGoogleId(googleId: String): User? = userRepository.findByGoogleIdAndStatus(googleId, Status.ACTIVE)
 
+    /** 여러 googleId를 한 번에 조회 (N+1 방지) */
+    fun findByGoogleIds(googleIds: List<String>): List<User> =
+        if (googleIds.isEmpty()) emptyList() else userRepository.findByGoogleIdInAndStatus(googleIds, Status.ACTIVE)
+
     fun findByNickname(nickname: String): User? = userRepository.findByNicknameAndStatus(nickname, Status.ACTIVE)
 
     fun updateNickname(

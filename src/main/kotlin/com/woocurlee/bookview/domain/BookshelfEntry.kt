@@ -4,9 +4,12 @@ import com.woocurlee.bookview.common.MongoCollections
 import java.time.LocalDate
 import java.time.LocalDateTime
 import org.springframework.data.annotation.Id
+import org.springframework.data.mongodb.core.index.CompoundIndex
 import org.springframework.data.mongodb.core.mapping.Document
 
 @Document(collection = MongoCollections.BOOKSHELF)
+@CompoundIndex(name = "bookshelf_user_status_created_idx", def = "{'userId': 1, 'status': 1, 'createdAt': -1}")
+@CompoundIndex(name = "bookshelf_user_isbn_idx", def = "{'userId': 1, 'bookIsbn': 1}")
 data class BookshelfEntry(
     @Id
     val id: String? = null,

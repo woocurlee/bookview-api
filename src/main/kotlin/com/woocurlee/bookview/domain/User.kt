@@ -3,6 +3,7 @@ package com.woocurlee.bookview.domain
 import com.woocurlee.bookview.common.MongoCollections
 import java.time.LocalDateTime
 import org.springframework.data.annotation.Id
+import org.springframework.data.mongodb.core.index.Indexed
 import org.springframework.data.mongodb.core.mapping.Document
 
 @Document(collection = MongoCollections.USERS)
@@ -10,7 +11,9 @@ data class User(
     @Id
     val id: String? = null,
     val userNo: Long? = null,
+    @Indexed(name = "user_googleId_idx")
     val googleId: String,
+    @Indexed(name = "user_nickname_idx")
     val nickname: String,
     val isNicknameSet: Boolean = false, // 닉네임 설정 여부
     val profileImageUrl: String? = null,

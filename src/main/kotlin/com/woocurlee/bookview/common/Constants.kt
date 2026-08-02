@@ -6,6 +6,7 @@ object MongoCollections {
     const val SEQUENCES = "sequences"
     const val REVIEW_LIKES = "review_likes"
     const val COMMENTS = "comments"
+    const val BOOKSHELF = "bookshelf"
 }
 
 object SequenceNames {

@@ -4,6 +4,7 @@ import com.woocurlee.bookview.domain.Review
 import com.woocurlee.bookview.service.CommentService
 import com.woocurlee.bookview.service.ReviewLikeService
 import com.woocurlee.bookview.service.ReviewService
+import com.woocurlee.bookview.service.UserPageService
 import com.woocurlee.bookview.service.UserService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -25,6 +26,8 @@ class ViewControllerJsonLdTest {
 
     @Mock lateinit var commentService: CommentService
 
+    @Mock lateinit var userPageService: UserPageService
+
     private lateinit var controller: ViewController
     private val objectMapper = ObjectMapper()
 
@@ -36,6 +39,7 @@ class ViewControllerJsonLdTest {
                 reviewService,
                 reviewLikeService,
                 commentService,
+                userPageService,
                 objectMapper,
                 "https://bookview.my",
             )

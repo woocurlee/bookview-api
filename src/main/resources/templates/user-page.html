@@ -36,15 +36,24 @@
                     <div class="text-stone-600 text-sm">평균 별점</div>
                 </div>
                 <div class="bg-stone-50 border border-stone-200 p-5 md:p-6 rounded-xl text-center">
-                    <div class="text-3xl mb-2">❤️</div>
-                    <div class="text-2xl font-bold text-stone-700" th:text="${totalLikes}">0</div>
-                    <div class="text-stone-600 text-sm">받은 좋아요</div>
+                    <div class="text-3xl mb-2">📖</div>
+                    <div class="text-2xl font-bold text-stone-700" th:text="${readBooksCount}">0</div>
+                    <div class="text-stone-600 text-sm">읽은 책</div>
                 </div>
             </div>
         </div>
 
-        <!-- 리뷰 목록 -->
+        <!-- 탭: 리뷰 / 읽은 책 -->
         <div class="bg-white rounded-xl p-6 md:p-8 shadow-md">
+            <div class="flex gap-1 border-b border-stone-200 mb-6">
+                <button id="tabReviewsBtn" type="button" onclick="switchBookshelfTab('reviews')"
+                    class="px-4 py-3 font-bold text-stone-800 border-b-2 border-amber-500 -mb-px transition-colors">📝 리뷰</button>
+                <button id="tabShelfBtn" type="button" onclick="switchBookshelfTab('shelf')"
+                    class="px-4 py-3 font-bold text-stone-400 border-b-2 border-transparent -mb-px hover:text-stone-600 transition-colors">📚 읽은 책</button>
+            </div>
+
+            <!-- 리뷰 패널 -->
+            <div id="panelReviews">
             <h2 class="text-xl md:text-2xl font-bold text-stone-800 mb-6"
                 th:text="${isOwner} ? '📝 내가 쓴 리뷰' : '📝 ' + ${profileUser.nickname} + '의 리뷰'">📝 리뷰</h2>
 
@@ -87,8 +96,56 @@
                     첫 리뷰 작성하기
                 </a>
             </div>
+            </div><!-- /panelReviews -->
+
+            <!-- 읽은 책 패널 -->
+            <link rel="stylesheet" href="/css/bookshelf.css">
+            <div id="panelShelf" class="hidden" th:attr="data-owner=${isOwner}">
+                <div class="bs-toolbar">
+                    <h2 class="bs-h2">📚 내 서재</h2>
+                    <div class="spacer"></div>
+                    <div class="bs-seg" role="tablist" aria-label="뷰 전환">
+                        <button type="button" class="bs-seg-btn" data-view="calendar" onclick="setShelfView('calendar')">달력</button>
+                        <button type="button" class="bs-seg-btn" data-view="shelf" onclick="setShelfView('shelf')">책장</button>
+                    </div>
+                    <button th:if="${isOwner}" type="button" onclick="openAddBookModal()" class="bs-add">＋ 책 추가</button>
+                </div>
+
+                <div class="bs-scene" id="bsScene">
+                    <!-- 달력 뷰 -->
+                    <div id="viewCalendar">
+                        <div id="readingStrip" class="bs-reading hidden">
+                            <p class="bs-reading-label">📖 읽는 중</p>
+                            <div id="readingStripList" class="bs-reading-row"></div>
+                        </div>
+                        <div id="bookshelfCalendar">
+                            <div class="bs-cal-nav">
+                                <button type="button" onclick="bookshelfChangeMonth(-1)" aria-label="이전 달">‹</button>
+                                <span id="calendarLabel" class="bs-cal-label"></span>
+                                <button type="button" onclick="bookshelfChangeMonth(1)" aria-label="다음 달">›</button>
+                            </div>
+                            <div class="bs-cal-week"><div class="sun">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div class="sat">토</div></div>
+                            <div id="calendarGrid" class="bs-cal-grid"></div>
+                        </div>
+                    </div>
+
+                    <!-- 책장 뷰 -->
+                    <div id="viewShelf" class="hidden"></div>
+
+                    <!-- 빈 상태 -->
+                    <div id="shelfEmpty" class="bs-empty hidden">
+                        <div class="bs-empty-emoji">📚</div>
+                        <p>아직 등록된 책이 없습니다.</p>
+                        <button th:if="${isOwner}" type="button" onclick="openAddBookModal()" class="bs-add">첫 책 추가하기</button>
+                    </div>
+                </div>
+            </div><!-- /panelShelf -->
         </div>
     </div>
+
+    <!-- 책장 데이터 island (서버에서 이미 `<` 이스케이프 처리됨) -->
+    <script type="application/json" id="bookshelfReadingData" th:utext="${bookshelfReadingJson}">[]</script>
+    <script type="application/json" id="bookshelfFinishedData" th:utext="${bookshelfFinishedJson}">[]</script>
 
     <!-- 프로필 수정 모달 (본인만) -->
     <div th:if="${isOwner}" id="editModal" class="hidden fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 z-50 flex justify-center items-center">
@@ -116,9 +173,105 @@
         </div>
     </div>
 
+    <!-- 책 추가 모달 (본인만) -->
+    <div th:if="${isOwner}" id="addBookModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+        <div class="bg-white rounded-2xl p-5 md:p-8 w-11/12 max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold text-gray-800">책 추가</h2>
+                <button type="button" onclick="closeAddBookModal()" class="text-stone-400 hover:text-stone-600 text-3xl leading-none">&times;</button>
+            </div>
+
+            <!-- 검색 -->
+            <div id="bsSearchSection">
+                <div class="flex gap-2 mb-4">
+                    <input id="bsBookSearch" type="text" placeholder="책 제목, 저자로 검색"
+                        onkeydown="if(event.key==='Enter'){event.preventDefault();bsSearchBooks();}"
+                        class="flex-1 p-3 border-2 border-stone-300 rounded-lg focus:outline-none focus:border-amber-500" autocomplete="off">
+                    <button type="button" onclick="bsSearchBooks()" class="px-5 py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600 whitespace-nowrap">검색</button>
+                </div>
+                <div id="bsBookLoading" class="hidden text-center py-4 text-stone-500">불러오는 중...</div>
+                <div id="bsBookList" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
+            </div>
+
+            <!-- 선택된 책 + 날짜 -->
+            <div id="bsSelectedSection" class="hidden">
+                <div class="flex gap-4 items-center p-4 bg-amber-50 border border-amber-200 rounded-lg mb-4">
+                    <img id="bsSelectedThumbnail" src="" alt="선택한 책 표지" class="w-16 h-24 object-contain flex-shrink-0">
+                    <div class="flex-1 min-w-0">
+                        <div id="bsSelectedTitle" class="font-bold text-stone-800 line-clamp-2"></div>
+                        <div id="bsSelectedAuthor" class="text-stone-600 text-sm line-clamp-1"></div>
+                    </div>
+                    <button type="button" onclick="bsClearSelection()" class="text-amber-600 text-sm hover:underline whitespace-nowrap">변경</button>
+                </div>
+                <div class="grid grid-cols-2 gap-3 mb-2">
+                    <div>
+                        <label class="block mb-1 text-sm font-semibold text-stone-700">시작일 <span class="text-stone-400 font-normal">(선택)</span></label>
+                        <input id="bsStartedAt" type="date" class="w-full p-3 border-2 border-stone-300 rounded-lg focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-sm font-semibold text-stone-700">완독일</label>
+                        <input id="bsFinishedAt" type="date" class="w-full p-3 border-2 border-stone-300 rounded-lg focus:outline-none focus:border-amber-500">
+                    </div>
+                </div>
+                <p class="text-xs text-stone-500 mb-4">완독일을 비워두면 "읽는 중"으로 표시됩니다.</p>
+                <button type="button" onclick="bsSubmitEntry()" class="w-full py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600 font-semibold">저장</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 책 상세/편집 모달 -->
+    <div id="entryDetailModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+        <div class="bg-white rounded-2xl p-5 md:p-8 w-11/12 max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-800">책 정보</h2>
+                <button type="button" onclick="closeEntryDetailModal()" class="text-stone-400 hover:text-stone-600 text-3xl leading-none">&times;</button>
+            </div>
+            <div class="flex gap-4 items-start mb-4">
+                <img id="edThumbnail" src="" alt="책 표지" class="w-20 h-28 object-contain flex-shrink-0 rounded shadow">
+                <div class="flex-1 min-w-0">
+                    <div id="edTitle" class="font-bold text-stone-800 mb-1"></div>
+                    <div id="edAuthor" class="text-stone-600 text-sm"></div>
+                </div>
+            </div>
+
+            <!-- 소유자: 편집 -->
+            <div id="edOwnerControls" class="hidden">
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <div>
+                        <label class="block mb-1 text-sm font-semibold text-stone-700">시작일</label>
+                        <input id="edStartedAt" type="date" class="w-full p-3 border-2 border-stone-300 rounded-lg focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-sm font-semibold text-stone-700">완독일</label>
+                        <input id="edFinishedAt" type="date" class="w-full p-3 border-2 border-stone-300 rounded-lg focus:outline-none focus:border-amber-500">
+                    </div>
+                </div>
+                <div class="flex gap-3">
+                    <button type="button" onclick="bsDeleteEntry()" class="px-4 py-3 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 font-semibold">삭제</button>
+                    <button type="button" onclick="bsSaveEntryEdit()" class="flex-1 py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600 font-semibold">저장</button>
+                </div>
+            </div>
+
+            <!-- 비소유자: 읽기 전용 -->
+            <div id="edReadonly" class="hidden text-stone-600 text-sm bg-stone-50 rounded-lg p-4"></div>
+        </div>
+    </div>
+
+    <!-- 같은 날 완독한 책 목록 모달 -->
+    <div id="dayBooksModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+        <div class="bg-white rounded-2xl p-5 w-11/12 max-w-sm max-h-[80vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h2 id="dayModalTitle" class="text-lg font-bold text-gray-800">완독한 책</h2>
+                <button type="button" onclick="closeDayModal()" class="text-stone-400 hover:text-stone-600 text-3xl leading-none">&times;</button>
+            </div>
+            <div id="dayBooksList" class="flex flex-col gap-2"></div>
+        </div>
+    </div>
+
     <footer th:replace="~{layout :: footer}"></footer>
 
     <script src="/js/common.js"></script>
+    <script src="/js/bookshelf.js"></script>
     <th:block th:if="${isOwner}">
         <script src="/js/my-page.js"></script>
     </th:block>

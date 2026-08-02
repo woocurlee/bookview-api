@@ -36,7 +36,9 @@ jwt:
 
 kakao:
   api:
-    key: ${KAKAO_API_KEY}
+    key: ${KAKAO_API_KEY:mock}
+  mock:
+    enabled: true # 로컬 개발: 카카오 API 대신 목 데이터 사용 (false로 두면 실제 API 호출)
 
 app:
   base-url: http://localhost:8080

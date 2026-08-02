@@ -1,21 +1,23 @@
 package com.woocurlee.bookview.service
 
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.bodyToMono
 
 @Service
+@ConditionalOnProperty(name = ["kakao.mock.enabled"], havingValue = "false", matchIfMissing = true)
 class KakaoBookSearchService(
     private val kakaoWebClient: WebClient,
-) {
+) : BookSearchService {
     @Value("\${kakao.api.key}")
     private lateinit var kakaoApiKey: String
 
-    fun searchBooks(
+    override fun searchBooks(
         query: String,
-        page: Int = 1,
-        size: Int = 10,
+        page: Int,
+        size: Int,
     ): KakaoBookSearchResponse? {
         val log = org.slf4j.LoggerFactory.getLogger(javaClass)
         log.info("=== 카카오 책 검색 API 호출 ===")

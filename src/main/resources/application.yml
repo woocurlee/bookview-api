@@ -2,6 +2,10 @@ spring:
   application:
     name: bookview
 
+  data:
+    mongodb:
+      auto-index-creation: true # 도메인 @Indexed/@CompoundIndex를 앱 시작 시 생성
+
   thymeleaf:
     cache: false # 개발 시 템플릿 자동 새로고침
 

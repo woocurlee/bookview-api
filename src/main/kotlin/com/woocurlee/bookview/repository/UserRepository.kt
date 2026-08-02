@@ -14,6 +14,11 @@ interface UserRepository : MongoRepository<User, String> {
         status: Status,
     ): User?
 
+    fun findByGoogleIdInAndStatus(
+        googleIds: List<String>,
+        status: Status,
+    ): List<User>
+
     fun existsByNicknameAndStatus(
         nickname: String,
         status: Status,

@@ -75,7 +75,8 @@ class CommentService(
             )
         val savedComment = commentRepository.save(comment)
 
-        return toCommentResponse(savedComment)
+        val nickname = userService.findByGoogleId(savedComment.userId)?.nickname ?: "알 수 없음"
+        return toCommentResponse(savedComment, nickname)
     }
 
     data class CommentTree(
@@ -94,15 +95,18 @@ class CommentService(
         )
     }
 
-    /** 리뷰 목록 표기용: 리뷰별 활성 댓글 수 (reviewId -> count) */
-    fun getCommentCounts(reviewIds: List<String>): Map<String, Long> =
-        reviewIds.associateWith { commentRepository.countByReviewIdAndStatus(it, Status.ACTIVE) }
+    /** 리뷰 목록 표기용: 리뷰별 활성 댓글 수 (reviewId -> count). 댓글 0개인 리뷰는 맵에서 제외 */
+    fun getCommentCounts(reviewIds: List<String>): Map<String, Long> {
+        if (reviewIds.isEmpty()) return emptyMap()
+        return commentRepository
+            .countByReviewIds(reviewIds, Status.ACTIVE)
+            .associate { it.reviewId to it.count }
+    }
 
     fun getCommentsByReviewId(reviewId: String): List<CommentResponse> {
-        // 모든 댓글 조회 (삭제된 댓글 포함)
+        // 모든 댓글 조회 (삭제된 댓글 포함) — ACTIVE/DELETED를 한 번에
         val allComments =
-            commentRepository.findByReviewIdAndStatus(reviewId, Status.ACTIVE) +
-                commentRepository.findByReviewIdAndStatus(reviewId, Status.DELETED)
+            commentRepository.findByReviewIdAndStatusIn(reviewId, listOf(Status.ACTIVE, Status.DELETED))
 
         // 대댓글 맵 생성
         val repliesMap = allComments.filter { it.parentId != null }.groupBy { it.parentId }
@@ -118,9 +122,13 @@ class CommentService(
                 }
             }
 
-        return filteredComments
-            .sortedBy { it.createdAt }
-            .map { toCommentResponse(it) }
+        val ordered = filteredComments.sortedBy { it.createdAt }
+        // 작성자 닉네임을 한 번에 배치 조회 (N+1 방지)
+        val nicknameById =
+            userService
+                .findByGoogleIds(ordered.map { it.userId }.distinct())
+                .associate { it.googleId to it.nickname }
+        return ordered.map { toCommentResponse(it, nicknameById[it.userId] ?: "알 수 없음") }
     }
 
     fun deleteComment(
@@ -147,17 +155,18 @@ class CommentService(
         commentRepository.save(deleted)
     }
 
-    private fun toCommentResponse(comment: Comment): CommentResponse {
-        val user = userService.findByGoogleId(comment.userId)
-        return CommentResponse(
+    private fun toCommentResponse(
+        comment: Comment,
+        nickname: String,
+    ): CommentResponse =
+        CommentResponse(
             id = comment.id!!,
             reviewId = comment.reviewId,
             userId = comment.userId,
-            userNickname = user?.nickname ?: "알 수 없음",
+            userNickname = nickname,
             content = comment.content,
             parentId = comment.parentId,
             status = comment.status,
             createdAt = comment.createdAt,
         )
-    }
 }

@@ -3,6 +3,7 @@ package com.woocurlee.bookview.controller
 import com.woocurlee.bookview.domain.Review
 import com.woocurlee.bookview.dto.CreateReviewRequest
 import com.woocurlee.bookview.dto.UpdateReviewRequest
+import com.woocurlee.bookview.service.CommentService
 import com.woocurlee.bookview.service.ReviewService
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/reviews")
 class ReviewController(
     private val reviewService: ReviewService,
+    private val commentService: CommentService,
 ) {
     @GetMapping
     fun getAllReviews(
@@ -35,6 +37,7 @@ class ReviewController(
             mapOf(
                 "reviews" to reviewsPage.content,
                 "hasMore" to reviewsPage.hasNext(),
+                "commentCounts" to commentService.getCommentCounts(reviewsPage.content.mapNotNull { it.id }),
             ),
         )
     }

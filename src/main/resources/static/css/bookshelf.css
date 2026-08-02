@@ -1,0 +1,131 @@
+/* 읽은 책 - 달력/책장 뷰 (따뜻한 일러스트 톤). 모든 규칙은 #panelShelf로 스코프한다. */
+#panelShelf {
+  --edge: #4c3b2e;
+  --scene-1: #f5ead1;
+  --scene-2: #ecdcbb;
+  --scene-glow: rgba(255, 244, 214, 0.9);
+  --wood-1: #cba274;
+  --wood-2: #b98a54;
+  --paper: #fbf3df;
+  --cal-cell: rgba(255, 255, 255, 0.42);
+  --cal-line: rgba(76, 59, 46, 0.16);
+  --cal-ink: #5a4632;
+  --bs-accent: #f59e0b;
+  --bs-accent-strong: #d97706;
+}
+
+/* ── 툴바 (제목 · 뷰 토글 · 책 추가) ── */
+#panelShelf .bs-toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+#panelShelf .bs-h2 { font-size: 1.25rem; font-weight: 800; color: #292524; margin: 0; }
+#panelShelf .bs-toolbar .spacer { flex: 1 1 20px; }
+#panelShelf .bs-seg { display: inline-flex; background: #f4f1ec; border: 1px solid #e7e2da; border-radius: 10px; padding: 3px; gap: 2px; }
+#panelShelf .bs-seg.hidden { display: none; }
+#panelShelf .bs-seg-btn { appearance: none; border: none; cursor: pointer; font: inherit; font-weight: 700; font-size: 13px; color: #78716c; background: none; padding: 6px 15px; border-radius: 7px; }
+#panelShelf .bs-seg-btn.on { background: #fff; color: #292524; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); }
+#panelShelf .bs-add { appearance: none; border: none; cursor: pointer; font: inherit; font-weight: 700; font-size: 0.875rem; background: var(--bs-accent); color: #fff; padding: 9px 16px; border-radius: 8px; white-space: nowrap; transition: background 0.15s; }
+#panelShelf .bs-add:hover { background: var(--bs-accent-strong); }
+
+/* ── 공통 따뜻한 배경 ── */
+#panelShelf .bs-scene { position: relative; border-radius: 16px; overflow: hidden; padding: 20px;
+  background: radial-gradient(120% 90% at 85% 0%, var(--scene-glow), transparent 55%), linear-gradient(var(--scene-1), var(--scene-2)); }
+
+/* ── 책 색 팔레트 (--f: 표지색, --tk: 글자색) ── */
+#panelShelf .f-terra { --f: #cf7350; --tk: #fbeee4; }
+#panelShelf .f-ochre { --f: #dca63f; --tk: #3e2c14; }
+#panelShelf .f-sage  { --f: #9cae86; --tk: #26331d; }
+#panelShelf .f-teal  { --f: #5f9c9c; --tk: #103532; }
+#panelShelf .f-cream { --f: #ecdcbc; --tk: #453321; }
+#panelShelf .f-clay  { --f: #cf9a82; --tk: #3f2418; }
+#panelShelf .f-plum  { --f: #8a5a78; --tk: #f7e9f0; }
+#panelShelf .f-denim { --f: #6d84a8; --tk: #12233a; }
+#panelShelf .f-olive { --f: #8f8b4c; --tk: #f7f3df; }
+#panelShelf .f-rust  { --f: #b0563a; --tk: #f8e7de; }
+
+/* ── 읽는 중 스트립 (미니 정면 책) ── */
+#panelShelf .bs-reading { margin-bottom: 18px; }
+#panelShelf .bs-reading.hidden { display: none; }
+#panelShelf .bs-reading-label { font-size: 12px; font-weight: 800; color: var(--edge); margin: 0 0 10px 2px; }
+#panelShelf .bs-reading-row { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; }
+#panelShelf .bs-mini-faced { flex: 0 0 auto; position: relative; width: clamp(48px, 8vw, 76px); aspect-ratio: 5 / 7; background: var(--f); border: 2px solid var(--edge); border-radius: 3px 6px 6px 3px; box-shadow: 0 6px 9px -6px rgba(50, 32, 14, 0.5); cursor: pointer; padding: 0; }
+#panelShelf .bs-mini-faced .mm { position: absolute; top: 11%; left: 11%; right: 9%; font-size: clamp(8px, 1.7vw, 10px); font-weight: 800; color: var(--tk); line-height: 1.15; text-align: left; overflow: hidden; max-height: 74%; }
+#panelShelf .bs-mini-faced .mk { position: absolute; top: -7px; right: 20%; width: 8px; height: 16px; background: var(--bs-accent); border: 1.5px solid var(--edge); border-radius: 2px 2px 0 0; }
+
+/* ── 달력 ── */
+#panelShelf .bs-cal-nav { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 14px; }
+#panelShelf .bs-cal-nav button { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--edge); background: var(--paper); color: var(--edge); font-size: 15px; cursor: pointer; line-height: 1; padding: 0; }
+#panelShelf .bs-cal-label { font-size: 15px; font-weight: 800; color: var(--edge); min-width: 120px; text-align: center; }
+#panelShelf .bs-cal-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 6px; }
+#panelShelf .bs-cal-week div { text-align: center; font-size: 11px; font-weight: 800; color: var(--cal-ink); }
+#panelShelf .bs-cal-week .sun { color: #c96a4c; }
+#panelShelf .bs-cal-week .sat { color: #6d84a8; }
+#panelShelf .bs-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+#panelShelf .bs-cell { aspect-ratio: 1 / 1; border: 1.5px solid var(--cal-line); border-radius: 9px; background: var(--cal-cell); position: relative; }
+#panelShelf .bs-cell.empty { border: none; background: none; }
+#panelShelf .bs-cell.has { cursor: pointer; }
+#panelShelf .bs-cell .dn { position: absolute; top: 4px; left: 7px; font-size: 10px; font-weight: 700; color: var(--cal-ink); opacity: 0.8; }
+/* 미니 책: 칸 '높이' 기준으로 크기 조정 → 위쪽에 날짜 숫자 공간을 항상 남긴다 */
+#panelShelf .bs-cell .mini { position: absolute; left: 50%; bottom: 6%; transform: translateX(-50%); height: 64%; max-height: 104px; aspect-ratio: 2 / 3; background: var(--f); border: 1.5px solid var(--edge); border-radius: 2px 3px 3px 2px; box-shadow: 0 3px 5px -3px rgba(50, 32, 14, 0.55); }
+#panelShelf .bs-cell .mini::before { content: ""; position: absolute; top: 6%; left: -1.5px; right: -1.5px; height: 8%; background: linear-gradient(#f3ecdc, #e3d6bd); border-radius: 2px 2px 0 0; }
+#panelShelf .bs-cell.has:hover .mini { box-shadow: 0 5px 7px -3px rgba(50, 32, 14, 0.6); }
+/* +N 배지: 미니 책의 우상단 모서리에 부착 (책이 날짜 숫자보다 아래라 충돌 없음) */
+#panelShelf .bs-cell .mini .plus { position: absolute; top: -8px; right: -8px; font-size: 9px; font-weight: 800; color: #fff; background: var(--edge); border: 1.5px solid #f4ecda; border-radius: 999px; min-width: 15px; text-align: center; padding: 0 3px; line-height: 1.55; }
+
+/* ── 책장 ── */
+#panelShelf .bs-shelf { position: relative; }
+#panelShelf .bs-shelf-label { display: inline-flex; align-items: center; gap: 7px; margin: 20px 0 -6px 4px;
+  font-size: 12px; font-weight: 800; color: var(--edge); background: var(--paper); border-radius: 999px; padding: 3px 12px; box-shadow: 0 1px 0 rgba(0, 0, 0, 0.06); }
+#panelShelf .bs-shelf-label:first-child { margin-top: 0; }
+#panelShelf .bs-shelf-label .n { font-weight: 700; opacity: 0.6; }
+#panelShelf .bs-shelf-label.now { background: #f4c470; }
+#panelShelf .bs-books { display: flex; align-items: flex-end; gap: 7px; padding: 26px 4px 0; min-height: 168px; }
+#panelShelf .bs-plank { height: 12px; margin: 0; border-radius: 3px; background: linear-gradient(var(--wood-1), var(--wood-2)); border: 2px solid var(--edge); box-shadow: 0 7px 12px -7px rgba(50, 32, 14, 0.4); position: relative; }
+#panelShelf .bs-plank::after { content: ""; position: absolute; left: 8px; right: 8px; top: 2px; height: 2px; border-radius: 2px; background: rgba(255, 255, 255, 0.22); }
+
+/* 책등 */
+#panelShelf .bs-book { flex: 0 0 auto; position: relative; width: 34px; height: 148px; background: var(--f);
+  border: 2px solid var(--edge); border-radius: 7px 7px 2px 2px; cursor: pointer; padding: 0;
+  box-shadow: 0 6px 8px -6px rgba(50, 32, 14, 0.4); transition: transform 0.16s ease; }
+#panelShelf .bs-book:hover { transform: translateY(-9px); }
+#panelShelf .k-s { width: 26px; } #panelShelf .k-m { width: 34px; } #panelShelf .k-l { width: 43px; } #panelShelf .k-xl { width: 52px; }
+#panelShelf .h-a { height: 136px; } #panelShelf .h-b { height: 150px; } #panelShelf .h-c { height: 162px; } #panelShelf .h-d { height: 144px; }
+#panelShelf .d-band::before, #panelShelf .d-band::after { content: ""; position: absolute; left: -2px; right: -2px; height: 8px; border-top: 2px solid var(--edge); border-bottom: 2px solid var(--edge); }
+#panelShelf .d-band::before { top: 18px; } #panelShelf .d-band::after { bottom: 20px; }
+#panelShelf .d-dot::before { content: ""; position: absolute; left: 50%; top: 22px; width: 9px; height: 9px; border: 2px solid var(--edge); border-radius: 50%; transform: translateX(-50%); }
+#panelShelf .d-tick::before { content: ""; position: absolute; left: -2px; right: -2px; top: 20px; border-top: 2px solid var(--edge); }
+#panelShelf .d-tick::after { content: ""; position: absolute; left: -2px; right: -2px; bottom: 20px; border-top: 2px solid var(--edge); }
+#panelShelf .bs-book .cap { position: absolute; inset: 14px 0; display: flex; align-items: center; justify-content: center; }
+#panelShelf .bs-book .cap span { writing-mode: vertical-rl; text-orientation: mixed; font-size: 11px; font-weight: 800; color: var(--tk); white-space: nowrap; overflow: hidden; max-height: 100%; }
+
+/* 읽는 중 책갈피 */
+#panelShelf .mark { position: absolute; top: -8px; right: 8px; width: 9px; height: 20px; background: var(--bs-accent); border: 2px solid var(--edge); border-radius: 2px 2px 0 0; z-index: 3; }
+
+/* 정면 책 */
+#panelShelf .bs-bkf { flex: 0 0 auto; position: relative; width: 74px; height: 108px; background: var(--f);
+  border: 2px solid var(--edge); border-radius: 4px 6px 6px 4px; cursor: pointer; margin: 0 3px; padding: 0;
+  box-shadow: 0 8px 12px -7px rgba(50, 32, 14, 0.45); transition: transform 0.16s ease; }
+#panelShelf .bs-bkf:hover { transform: translateY(-9px); }
+#panelShelf .bs-bkf::before { content: ""; position: absolute; left: 6px; top: 0; bottom: 0; border-left: 2px solid var(--edge); opacity: 0.5; }
+#panelShelf .bs-bkf .ct { position: absolute; top: 13px; left: 12px; right: 9px; font-size: 11px; font-weight: 800; color: var(--tk); line-height: 1.2; text-align: left; }
+#panelShelf .bs-bkf .ca { position: absolute; bottom: 11px; left: 12px; right: 9px; font-size: 8.5px; font-weight: 600; color: var(--tk); opacity: 0.72; text-align: left; }
+
+/* 화분 소품 */
+#panelShelf .bs-plant { flex: 0 0 auto; align-self: flex-end; position: relative; width: 46px; height: 74px; margin-left: 8px; }
+#panelShelf .bs-plant .pot { position: absolute; bottom: 0; left: 8px; right: 8px; height: 30px; background: #c98a5a; border: 2px solid var(--edge); border-radius: 3px 3px 7px 7px; }
+#panelShelf .bs-plant .pot::after { content: ""; position: absolute; left: -2px; right: -2px; top: 6px; border-top: 2px solid var(--edge); }
+#panelShelf .bs-plant .leaf { position: absolute; width: 20px; height: 30px; border: 2px solid var(--edge); border-radius: 60% 60% 60% 60% / 80% 80% 40% 40%; bottom: 26px; }
+#panelShelf .bs-plant .l1 { left: 4px; transform: rotate(-24deg); background: #8fae7a; }
+#panelShelf .bs-plant .l2 { right: 4px; transform: rotate(24deg); background: #7fa06b; }
+#panelShelf .bs-plant .l3 { left: 13px; bottom: 34px; background: #9cba86; }
+
+/* 빈 상태 */
+#panelShelf .bs-empty { text-align: center; padding: 40px 0; }
+#panelShelf .bs-empty.hidden { display: none; }
+#panelShelf .bs-empty-emoji { font-size: 3.5rem; margin-bottom: 12px; }
+#panelShelf .bs-empty p { color: var(--edge); margin: 0 0 16px; }
+
+#panelShelf .hidden { display: none; }
+
+/* 모바일에선 달력 미니 책을 조금 더 작게 */
+@media (max-width: 640px) {
+  #panelShelf .bs-cell .mini { height: 56%; }
+}

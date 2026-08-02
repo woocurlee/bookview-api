@@ -1,6 +1,5 @@
 package com.woocurlee.bookview.controller
 
-import com.woocurlee.bookview.domain.BookshelfEntry
 import com.woocurlee.bookview.dto.AddBookshelfEntryRequest
 import com.woocurlee.bookview.dto.UpdateBookshelfEntryRequest
 import com.woocurlee.bookview.service.BookshelfService
@@ -23,12 +22,12 @@ class BookshelfController(
     fun addEntry(
         @RequestBody request: AddBookshelfEntryRequest,
         @AuthenticationPrincipal principal: Any,
-    ): ResponseEntity<BookshelfEntry> {
+    ): ResponseEntity<Any> {
         val googleId = googleIdOf(principal)
         return try {
             ResponseEntity.ok(bookshelfService.addEntry(googleId, request))
         } catch (e: IllegalArgumentException) {
-            ResponseEntity.badRequest().build()
+            ResponseEntity.badRequest().body(mapOf("message" to (e.message ?: "잘못된 요청입니다.")))
         }
     }
 
@@ -37,14 +36,14 @@ class BookshelfController(
         @PathVariable id: String,
         @RequestBody request: UpdateBookshelfEntryRequest,
         @AuthenticationPrincipal principal: Any,
-    ): ResponseEntity<BookshelfEntry> {
+    ): ResponseEntity<Any> {
         val googleId = googleIdOf(principal)
         return try {
             val updated =
                 bookshelfService.updateEntry(id, googleId, request) ?: return ResponseEntity.notFound().build()
             ResponseEntity.ok(updated)
         } catch (e: IllegalArgumentException) {
-            ResponseEntity.badRequest().build()
+            ResponseEntity.badRequest().body(mapOf("message" to (e.message ?: "잘못된 요청입니다.")))
         }
     }
 

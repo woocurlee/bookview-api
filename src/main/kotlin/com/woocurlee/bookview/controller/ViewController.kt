@@ -125,7 +125,7 @@ class ViewController(
         model.addAttribute("likedReviewIds", data.likedReviewIds)
         model.addAttribute("bookshelfReadingJson", toBookshelfJson(data.bookshelf.reading))
         model.addAttribute("bookshelfFinishedJson", toBookshelfJson(data.bookshelf.finished))
-        model.addAttribute("bookshelfCount", data.bookshelf.reading.size + data.bookshelf.finished.size)
+        model.addAttribute("readBooksCount", data.bookshelf.finished.size)
         model.addAttribute(
             "metaDescription",
             "${data.profileUser.nickname}의 BookView 프로필 - ${data.reviews.size}개의 리뷰, 평균 별점 ${data.stats.avgRating}",

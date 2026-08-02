@@ -40,6 +40,7 @@ class BookshelfService(
         request: AddBookshelfEntryRequest,
     ): BookshelfEntry {
         validateDates(request.startedAt, request.finishedAt)
+        checkNoDuplicate(userId, request.bookIsbn, request.finishedAt, excludeId = null)
         val entry =
             BookshelfEntry(
                 userId = userId,
@@ -64,6 +65,7 @@ class BookshelfService(
     ): BookshelfEntry? {
         val entry = findOwnedActiveEntry(id, userId) ?: return null
         validateDates(request.startedAt, request.finishedAt)
+        checkNoDuplicate(userId, entry.bookIsbn, request.finishedAt, excludeId = entry.id)
         val updated =
             entry.copy(
                 startedAt = request.startedAt,
@@ -102,6 +104,41 @@ class BookshelfService(
     ) {
         if (startedAt != null && finishedAt != null && finishedAt.isBefore(startedAt)) {
             throw IllegalArgumentException("완독일은 시작일보다 앞설 수 없습니다.")
+        }
+    }
+
+    /**
+     * 같은 책의 중복 등록을 막는다.
+     * - 완독(finishedAt 있음): 같은 완독일 중복만 차단, 다른 날짜는 N회차 재독으로 허용
+     * - 읽는 중(finishedAt 없음): 같은 책의 '읽는 중' 항목이 이미 있으면 차단
+     * isbn이 없으면 책을 식별할 수 없으므로 검사하지 않는다.
+     */
+    private fun checkNoDuplicate(
+        userId: String,
+        bookIsbn: String,
+        finishedAt: LocalDate?,
+        excludeId: String?,
+    ) {
+        if (bookIsbn.isBlank()) return
+        val existing =
+            if (finishedAt == null) {
+                bookshelfRepository.findByUserIdAndBookIsbnAndFinishedAtIsNullAndStatus(userId, bookIsbn, Status.ACTIVE)
+            } else {
+                bookshelfRepository.findByUserIdAndBookIsbnAndFinishedAtAndStatus(
+                    userId,
+                    bookIsbn,
+                    finishedAt,
+                    Status.ACTIVE,
+                )
+            }
+        if (existing.any { it.id != excludeId }) {
+            val message =
+                if (finishedAt == null) {
+                    "이미 '읽는 중'으로 등록된 책입니다."
+                } else {
+                    "이미 같은 날짜에 완독한 책으로 등록되어 있습니다."
+                }
+            throw IllegalArgumentException(message)
         }
     }
 }

@@ -36,9 +36,9 @@
                     <div class="text-stone-600 text-sm">평균 별점</div>
                 </div>
                 <div class="bg-stone-50 border border-stone-200 p-5 md:p-6 rounded-xl text-center">
-                    <div class="text-3xl mb-2">❤️</div>
-                    <div class="text-2xl font-bold text-stone-700" th:text="${totalLikes}">0</div>
-                    <div class="text-stone-600 text-sm">받은 좋아요</div>
+                    <div class="text-3xl mb-2">📖</div>
+                    <div class="text-2xl font-bold text-stone-700" th:text="${readBooksCount}">0</div>
+                    <div class="text-stone-600 text-sm">읽은 책</div>
                 </div>
             </div>
         </div>
@@ -99,42 +99,45 @@
             </div><!-- /panelReviews -->
 
             <!-- 읽은 책 패널 -->
+            <link rel="stylesheet" href="/css/bookshelf.css">
             <div id="panelShelf" class="hidden" th:attr="data-owner=${isOwner}">
-                <div class="flex items-center justify-between mb-5">
-                    <h2 class="text-xl md:text-2xl font-bold text-stone-800">📚 독서 캘린더</h2>
-                    <button th:if="${isOwner}" type="button" onclick="openAddBookModal()"
-                        class="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors font-semibold text-sm whitespace-nowrap">＋ 책 추가</button>
-                </div>
-
-                <!-- 읽는 중 스트립 -->
-                <div id="readingStrip" class="hidden mb-6">
-                    <h3 class="text-sm font-semibold text-stone-500 mb-2">📖 읽는 중</h3>
-                    <div id="readingStripList" class="flex gap-3 overflow-x-auto pb-2"></div>
-                </div>
-
-                <!-- 캘린더 -->
-                <div id="bookshelfCalendar" class="hidden">
-                    <div class="flex items-center justify-center gap-4 mb-4">
-                        <button type="button" onclick="bookshelfChangeMonth(-1)"
-                            class="w-9 h-9 flex items-center justify-center rounded-full text-stone-500 hover:bg-stone-100 text-xl">‹</button>
-                        <div id="calendarLabel" class="text-lg font-bold text-stone-800 w-36 text-center"></div>
-                        <button type="button" onclick="bookshelfChangeMonth(1)"
-                            class="w-9 h-9 flex items-center justify-center rounded-full text-stone-500 hover:bg-stone-100 text-xl">›</button>
+                <div class="bs-toolbar">
+                    <h2 class="bs-h2">📚 내 서재</h2>
+                    <div class="spacer"></div>
+                    <div class="bs-seg" role="tablist" aria-label="뷰 전환">
+                        <button type="button" class="bs-seg-btn" data-view="calendar" onclick="setShelfView('calendar')">달력</button>
+                        <button type="button" class="bs-seg-btn" data-view="shelf" onclick="setShelfView('shelf')">책장</button>
                     </div>
-                    <div class="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-stone-400 mb-1">
-                        <div class="text-red-400">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div class="text-blue-400">토</div>
-                    </div>
-                    <div id="calendarGrid" class="grid grid-cols-7 gap-1"></div>
+                    <button th:if="${isOwner}" type="button" onclick="openAddBookModal()" class="bs-add">＋ 책 추가</button>
                 </div>
 
-                <!-- 빈 상태 -->
-                <div id="shelfEmpty" class="hidden text-center py-12">
-                    <div class="text-6xl mb-4">📚</div>
-                    <p class="text-stone-500 mb-4">아직 등록된 책이 없습니다.</p>
-                    <button th:if="${isOwner}" type="button" onclick="openAddBookModal()"
-                        class="inline-block px-6 py-3 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors font-semibold shadow-sm hover:shadow-md">
-                        첫 책 추가하기
-                    </button>
+                <div class="bs-scene" id="bsScene">
+                    <!-- 달력 뷰 -->
+                    <div id="viewCalendar">
+                        <div id="readingStrip" class="bs-reading hidden">
+                            <p class="bs-reading-label">📖 읽는 중</p>
+                            <div id="readingStripList" class="bs-reading-row"></div>
+                        </div>
+                        <div id="bookshelfCalendar">
+                            <div class="bs-cal-nav">
+                                <button type="button" onclick="bookshelfChangeMonth(-1)" aria-label="이전 달">‹</button>
+                                <span id="calendarLabel" class="bs-cal-label"></span>
+                                <button type="button" onclick="bookshelfChangeMonth(1)" aria-label="다음 달">›</button>
+                            </div>
+                            <div class="bs-cal-week"><div class="sun">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div class="sat">토</div></div>
+                            <div id="calendarGrid" class="bs-cal-grid"></div>
+                        </div>
+                    </div>
+
+                    <!-- 책장 뷰 -->
+                    <div id="viewShelf" class="hidden"></div>
+
+                    <!-- 빈 상태 -->
+                    <div id="shelfEmpty" class="bs-empty hidden">
+                        <div class="bs-empty-emoji">📚</div>
+                        <p>아직 등록된 책이 없습니다.</p>
+                        <button th:if="${isOwner}" type="button" onclick="openAddBookModal()" class="bs-add">첫 책 추가하기</button>
+                    </div>
                 </div>
             </div><!-- /panelShelf -->
         </div>
@@ -251,6 +254,17 @@
 
             <!-- 비소유자: 읽기 전용 -->
             <div id="edReadonly" class="hidden text-stone-600 text-sm bg-stone-50 rounded-lg p-4"></div>
+        </div>
+    </div>
+
+    <!-- 같은 날 완독한 책 목록 모달 -->
+    <div id="dayBooksModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+        <div class="bg-white rounded-2xl p-5 w-11/12 max-w-sm max-h-[80vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h2 id="dayModalTitle" class="text-lg font-bold text-gray-800">완독한 책</h2>
+                <button type="button" onclick="closeDayModal()" class="text-stone-400 hover:text-stone-600 text-3xl leading-none">&times;</button>
+            </div>
+            <div id="dayBooksList" class="flex flex-col gap-2"></div>
         </div>
     </div>
 

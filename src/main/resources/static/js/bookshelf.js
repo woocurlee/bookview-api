@@ -11,6 +11,10 @@ let calMonth = 0;
 let bsSelectedBook = null;   // 추가 모달에서 선택한 책
 let bsEditingEntry = null;   // 상세/편집 모달에서 다루는 항목
 
+let bsCurrentView = 'calendar'; // 'calendar' | 'shelf'
+let bsResizeTimer = null;
+const BS_VIEW_KEY = 'bookview.shelfView';
+
 document.addEventListener('DOMContentLoaded', () => {
     const panel = document.getElementById('panelShelf');
     if (!panel) return;
@@ -34,9 +38,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
     Modal.setupOutsideClick('addBookModal');
     Modal.setupOutsideClick('entryDetailModal');
+    Modal.setupOutsideClick('dayBooksModal');
 
     renderShelf();
+    window.addEventListener('resize', bsOnResize);
+
+    // 저장/수정/삭제 후 리로드해도 '읽은 책' 탭에 머물도록 복원
+    if (location.hash === '#shelf') switchBookshelfTab('shelf');
 });
+
+function bsOnResize() {
+    clearTimeout(bsResizeTimer);
+    bsResizeTimer = setTimeout(() => {
+        if (bsCurrentView === 'shelf') renderShelfView();
+    }, 200);
+}
+
+/** 변경 작업 후 '읽은 책' 탭을 유지한 채 새로고침 */
+function reloadKeepingShelf() {
+    location.hash = 'shelf';
+    location.reload();
+}
 
 function parseDataIsland(id) {
     const el = document.getElementById(id);
@@ -56,6 +78,12 @@ function switchBookshelfTab(tab) {
 
     setTabActive('tabReviewsBtn', isReviews);
     setTabActive('tabShelfBtn', !isReviews);
+
+    // 현재 탭을 해시에 기록 (새로고침 시 유지)
+    history.replaceState(null, '', isReviews ? '#reviews' : '#shelf');
+
+    // 책장 뷰가 활성 상태로 패널이 보이면 (너비 확보) 다시 렌더
+    if (!isReviews && bsCurrentView === 'shelf') renderShelfView();
 }
 
 function setTabActive(btnId, active) {
@@ -71,15 +99,69 @@ function setTabActive(btnId, active) {
 function renderShelf() {
     const total = bsReading.length + bsFinished.length;
     const empty = document.getElementById('shelfEmpty');
-    const calendar = document.getElementById('bookshelfCalendar');
+    const viewCalendar = document.getElementById('viewCalendar');
+    const viewShelf = document.getElementById('viewShelf');
+    const seg = document.querySelector('#panelShelf .bs-seg');
 
-    empty.classList.toggle('hidden', total > 0);
-    calendar.classList.toggle('hidden', total === 0);
+    if (total === 0) {
+        empty.classList.remove('hidden');
+        viewCalendar.classList.add('hidden');
+        viewShelf.classList.add('hidden');
+        if (seg) seg.classList.add('hidden');
+        return;
+    }
+    empty.classList.add('hidden');
+    if (seg) seg.classList.remove('hidden');
 
     renderReadingStrip();
-    if (total > 0) renderCalendar();
+    renderCalendar();
+
+    let saved = null;
+    try { saved = localStorage.getItem(BS_VIEW_KEY); } catch (e) { /* localStorage 불가 시 기본값 */ }
+    setShelfView(saved === 'shelf' ? 'shelf' : 'calendar');
 }
 
+// 달력/책장 뷰 전환 (마지막 선택은 localStorage에 저장)
+function setShelfView(view) {
+    bsCurrentView = view === 'shelf' ? 'shelf' : 'calendar';
+    const isShelf = bsCurrentView === 'shelf';
+    document.getElementById('viewCalendar').classList.toggle('hidden', isShelf);
+    document.getElementById('viewShelf').classList.toggle('hidden', !isShelf);
+    document.querySelectorAll('#panelShelf .bs-seg-btn').forEach(b => {
+        b.classList.toggle('on', b.dataset.view === bsCurrentView);
+    });
+    try { localStorage.setItem(BS_VIEW_KEY, bsCurrentView); } catch (e) { /* 무시 */ }
+    if (isShelf) renderShelfView();
+}
+
+// ── 책 시각 속성 (책 id 시드로 고정: 새로고침해도 안 변함) ──
+const BS_FILLS = ['f-terra', 'f-ochre', 'f-sage', 'f-teal', 'f-cream', 'f-clay', 'f-plum', 'f-denim', 'f-olive', 'f-rust'];
+const BS_WIDTHS = ['k-s', 'k-m', 'k-l', 'k-xl'];
+const BS_HEIGHTS = ['h-a', 'h-b', 'h-c', 'h-d'];
+const BS_MOTIFS = ['d-band', 'd-dot', 'd-tick', ''];
+const BS_WIDTH_PX = { 'k-s': 26, 'k-m': 34, 'k-l': 43, 'k-xl': 52 };
+
+function bsHash(str) {
+    let h = 2166136261;
+    for (let i = 0; i < str.length; i++) {
+        h ^= str.charCodeAt(i);
+        h = Math.imul(h, 16777619);
+    }
+    return h >>> 0;
+}
+
+function bookStyle(entry) {
+    const key = String(entry.id || entry.bookIsbn || entry.bookTitle || '');
+    const h = bsHash(key);
+    return {
+        fill: BS_FILLS[h % BS_FILLS.length],
+        width: BS_WIDTHS[(h >>> 3) % BS_WIDTHS.length],
+        height: BS_HEIGHTS[(h >>> 7) % BS_HEIGHTS.length],
+        motif: BS_MOTIFS[(h >>> 11) % BS_MOTIFS.length],
+    };
+}
+
+// ── 읽는 중 스트립 (미니 정면 책) ──
 function renderReadingStrip() {
     const strip = document.getElementById('readingStrip');
     const list = document.getElementById('readingStripList');
@@ -90,21 +172,17 @@ function renderReadingStrip() {
     strip.classList.remove('hidden');
     list.innerHTML = '';
     bsReading.forEach(entry => {
-        const card = document.createElement('button');
-        card.type = 'button';
-        card.className = 'flex-shrink-0 w-24 text-left group';
-        card.onclick = () => openEntryDetail(entry);
-        card.innerHTML = `
-            <div class="w-24 h-32 rounded-lg overflow-hidden shadow bg-stone-100 mb-1">
-                ${thumbHtml(entry, 'w-full h-full object-cover group-hover:scale-105 transition-transform')}
-            </div>
-            <div class="text-xs font-semibold text-stone-700 line-clamp-2">${escapeHtml(entry.bookTitle)}</div>
-            <div class="text-[11px] text-stone-400">${entry.startedAt ? shortDate(entry.startedAt) + '~' : ''}</div>
-        `;
-        list.appendChild(card);
+        const el = document.createElement('button');
+        el.type = 'button';
+        el.className = 'bs-mini-faced ' + bookStyle(entry).fill;
+        el.title = entry.bookTitle;
+        el.onclick = () => openEntryDetail(entry);
+        el.innerHTML = `<span class="mk"></span><span class="mm">${escapeHtml(entry.bookTitle)}</span>`;
+        list.appendChild(el);
     });
 }
 
+// ── 달력 ──
 function renderCalendar() {
     document.getElementById('calendarLabel').textContent = `${calYear}년 ${calMonth + 1}월`;
     const grid = document.getElementById('calendarGrid');
@@ -113,49 +191,177 @@ function renderCalendar() {
     const firstWeekday = new Date(calYear, calMonth, 1).getDay(); // 0=일
     const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
 
-    // 앞쪽 빈 칸
-    for (let i = 0; i < firstWeekday; i++) {
-        grid.appendChild(emptyCell());
-    }
-
+    for (let i = 0; i < firstWeekday; i++) grid.appendChild(emptyCell());
     for (let day = 1; day <= daysInMonth; day++) {
         const dateKey = `${calYear}-${pad(calMonth + 1)}-${pad(day)}`;
-        const entries = bsFinishedByDate[dateKey] || [];
-        grid.appendChild(dayCell(day, entries));
+        grid.appendChild(dayCell(day, bsFinishedByDate[dateKey] || []));
     }
 }
 
 function emptyCell() {
     const cell = document.createElement('div');
-    cell.className = 'aspect-square';
+    cell.className = 'bs-cell empty';
     return cell;
 }
 
 function dayCell(day, entries) {
     const cell = document.createElement('div');
-    cell.className = 'aspect-square border border-stone-100 rounded-lg p-0.5 flex flex-col overflow-hidden';
+    cell.className = 'bs-cell';
 
-    const num = document.createElement('div');
-    num.className = 'text-[10px] text-stone-400 leading-none px-0.5';
-    num.textContent = day;
-    cell.appendChild(num);
+    const dn = document.createElement('span');
+    dn.className = 'dn';
+    dn.textContent = day;
+    cell.appendChild(dn);
 
     if (entries.length > 0) {
-        const books = document.createElement('div');
-        books.className = 'flex-1 flex flex-wrap gap-0.5 items-center justify-center min-h-0';
-        entries.forEach(entry => {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.title = entry.bookTitle;
-            btn.className = 'block h-full min-w-0 rounded overflow-hidden shadow-sm hover:ring-2 hover:ring-amber-400';
-            btn.style.flex = `1 1 ${Math.max(30, Math.floor(100 / entries.length))}%`;
-            btn.onclick = () => openEntryDetail(entry);
-            btn.innerHTML = thumbHtml(entry, 'w-full h-full object-cover');
-            books.appendChild(btn);
-        });
-        cell.appendChild(books);
+        cell.classList.add('has');
+        cell.tabIndex = 0;
+        cell.title = entries.length > 1 ? `${entries.length}권 완독` : entries[0].bookTitle;
+
+        const mini = document.createElement('span');
+        mini.className = 'mini ' + bookStyle(entries[0]).fill;
+        if (entries.length > 1) {
+            const plus = document.createElement('span');
+            plus.className = 'plus';
+            plus.textContent = '+' + (entries.length - 1);
+            mini.appendChild(plus); // 책 모서리에 부착 (날짜 숫자와 충돌 방지)
+        }
+        cell.appendChild(mini);
+        cell.onclick = entries.length > 1 ? () => openDayModal(entries) : () => openEntryDetail(entries[0]);
     }
     return cell;
+}
+
+// ── 책장 뷰 (연도별 그룹, 여러 단으로 wrap) ──
+function renderShelfView() {
+    const host = document.getElementById('viewShelf');
+    const scene = document.getElementById('bsScene');
+    if (!host || host.classList.contains('hidden')) return;
+    const innerW = scene.clientWidth - 40; // scene 좌우 패딩(20*2)
+    if (innerW <= 0) return; // 아직 화면에 없음 (탭 전환 시 다시 렌더)
+    host.innerHTML = '';
+
+    if (bsReading.length > 0) {
+        renderShelfSection(host, { label: '읽는 중', now: true, count: bsReading.length },
+            bsReading, { allFaced: true, plant: true }, innerW);
+    }
+
+    const byYear = {};
+    bsFinished.forEach(e => {
+        const y = (e.finishedAt || '').slice(0, 4) || '기타';
+        (byYear[y] = byYear[y] || []).push(e);
+    });
+    Object.keys(byYear).sort((a, b) => b.localeCompare(a)).forEach(year => {
+        const list = byYear[year];
+        renderShelfSection(host, { label: year, count: list.length },
+            list, { facedId: list[0] && list[0].id }, innerW);
+    });
+}
+
+// 한 그룹을 라벨 + 여러 선반 줄로 렌더 (책 너비 합으로 줄바꿈)
+function renderShelfSection(host, meta, entries, opts, innerW) {
+    const wrap = document.createElement('div');
+    wrap.className = 'bs-shelf';
+
+    const label = document.createElement('span');
+    label.className = 'bs-shelf-label' + (meta.now ? ' now' : '');
+    label.innerHTML = `${escapeHtml(meta.label)} <span class="n">${meta.now ? meta.count + '권' : '· ' + meta.count}</span>`;
+    wrap.appendChild(label);
+
+    const items = entries.map(e => {
+        const faced = Boolean(opts.allFaced || (opts.facedId && e.id === opts.facedId));
+        const w = (faced ? 74 : (BS_WIDTH_PX[bookStyle(e).width] || 34)) + 4; // +border
+        return { entry: e, faced, w };
+    });
+    if (opts.plant) items.push({ plant: true, w: 54 });
+
+    const gap = 7;
+    let row = [];
+    let rowW = 0;
+    const flush = () => {
+        if (!row.length) return;
+        const books = document.createElement('div');
+        books.className = 'bs-books';
+        row.forEach(it => {
+            books.appendChild(it.plant ? makePlant() : (it.faced ? makeFaced(it.entry) : makeSpine(it.entry)));
+        });
+        wrap.appendChild(books);
+        const plank = document.createElement('div');
+        plank.className = 'bs-plank';
+        wrap.appendChild(plank);
+        row = [];
+        rowW = 0;
+    };
+    items.forEach(it => {
+        const w = it.w + gap;
+        if (rowW + w > innerW && row.length) flush();
+        row.push(it);
+        rowW += w;
+    });
+    flush();
+
+    host.appendChild(wrap);
+}
+
+function makeSpine(entry) {
+    const s = bookStyle(entry);
+    const el = document.createElement('button');
+    el.type = 'button';
+    el.className = ['bs-book', s.width, s.height, s.fill, s.motif].filter(Boolean).join(' ');
+    el.title = entry.bookTitle;
+    if (s.width === 'k-m' || s.width === 'k-l' || s.width === 'k-xl') {
+        el.innerHTML = `<span class="cap"><span>${escapeHtml(entry.bookTitle)}</span></span>`;
+    }
+    el.onclick = () => openEntryDetail(entry);
+    return el;
+}
+
+function makeFaced(entry) {
+    const el = document.createElement('button');
+    el.type = 'button';
+    el.className = 'bs-bkf ' + bookStyle(entry).fill;
+    el.title = entry.bookTitle;
+    const mark = entry.finishedAt ? '' : '<span class="mark"></span>';
+    el.innerHTML = `${mark}<span class="ct">${escapeHtml(entry.bookTitle)}</span><span class="ca">${escapeHtml(entry.bookAuthor)}</span>`;
+    el.onclick = () => openEntryDetail(entry);
+    return el;
+}
+
+function makePlant() {
+    const el = document.createElement('div');
+    el.className = 'bs-plant';
+    el.setAttribute('aria-hidden', 'true');
+    el.innerHTML = '<span class="leaf l3"></span><span class="leaf l1"></span><span class="leaf l2"></span><span class="pot"></span>';
+    return el;
+}
+
+// 같은 날 완독한 여러 책 목록 모달
+function openDayModal(entries) {
+    const list = document.getElementById('dayBooksList');
+    const finishedAt = entries[0] && entries[0].finishedAt;
+    document.getElementById('dayModalTitle').textContent =
+        `${finishedAt ? shortDate(finishedAt) + ' ' : ''}완독한 책 ${entries.length}권`;
+    list.innerHTML = '';
+    entries.forEach(entry => {
+        const row = document.createElement('button');
+        row.type = 'button';
+        row.className = 'flex gap-3 items-center p-2 rounded-lg hover:bg-stone-50 text-left w-full';
+        row.onclick = () => { closeDayModal(); openEntryDetail(entry); };
+        row.innerHTML = `
+            <div class="w-10 h-14 flex-shrink-0 rounded overflow-hidden bg-stone-100">
+                ${thumbHtml(entry, 'w-full h-full object-cover')}
+            </div>
+            <div class="min-w-0">
+                <div class="font-semibold text-sm text-stone-800 line-clamp-1">${escapeHtml(entry.bookTitle)}</div>
+                <div class="text-xs text-stone-500 line-clamp-1">${escapeHtml(entry.bookAuthor)}</div>
+            </div>`;
+        list.appendChild(row);
+    });
+    Modal.open('dayBooksModal');
+}
+
+function closeDayModal() {
+    Modal.close('dayBooksModal');
 }
 
 function bookshelfChangeMonth(delta) {
@@ -203,9 +409,14 @@ async function bsSaveEntryEdit() {
         Alert.error('완독일은 시작일보다 앞설 수 없습니다.');
         return;
     }
+    const editDupMsg = duplicateReason(bsEditingEntry.bookIsbn, finishedAt, bsEditingEntry.id);
+    if (editDupMsg) {
+        Alert.error(editDupMsg);
+        return;
+    }
     try {
         await API.put(`/api/bookshelf/${bsEditingEntry.id}`, { startedAt, finishedAt });
-        location.reload();
+        reloadKeepingShelf();
     } catch (e) {
         Alert.error(e.message);
     }
@@ -216,7 +427,7 @@ async function bsDeleteEntry() {
     if (!Alert.confirm('이 책을 책장에서 삭제할까요?')) return;
     try {
         await API.delete(`/api/bookshelf/${bsEditingEntry.id}`);
-        location.reload();
+        reloadKeepingShelf();
     } catch (e) {
         Alert.error(e.message);
     }
@@ -301,9 +512,14 @@ async function bsSubmitEntry() {
         Alert.error('완독일은 시작일보다 앞설 수 없습니다.');
         return;
     }
+    const addDupMsg = duplicateReason(bsSelectedBook.bookIsbn, finishedAt, null);
+    if (addDupMsg) {
+        Alert.error(addDupMsg);
+        return;
+    }
     try {
         await API.post('/api/bookshelf', { ...bsSelectedBook, startedAt, finishedAt });
-        location.reload();
+        reloadKeepingShelf();
     } catch (e) {
         Alert.error(e.message);
     }
@@ -326,6 +542,20 @@ function thumbHtml(entry, imgClass) {
         return `<img src="${entry.bookThumbnail}" alt="${escapeHtml(entry.bookTitle)}" class="${imgClass}">`;
     }
     return `<div class="w-full h-full flex items-center justify-center bg-stone-200 text-stone-400 text-lg">📖</div>`;
+}
+
+// 중복 등록 사유 반환 (없으면 null). ISBN 없으면 검사 안 함
+// - 읽는 중: 같은 책이 이미 읽는 중이면 차단
+// - 완독: 같은 책을 같은 완독일로 등록했으면 차단(다른 날짜는 재독 허용)
+function duplicateReason(bookIsbn, finishedAt, excludeId) {
+    if (!bookIsbn) return null;
+    if (!finishedAt) {
+        const dup = bsReading.some(e => e.id !== excludeId && e.bookIsbn === bookIsbn);
+        return dup ? "이미 '읽는 중'으로 등록된 책입니다." : null;
+    }
+    const dup = bsFinished.some(e =>
+        e.id !== excludeId && e.bookIsbn === bookIsbn && e.finishedAt === finishedAt);
+    return dup ? '이미 같은 날짜에 완독한 책으로 등록되어 있습니다.' : null;
 }
 
 function pad(n) {

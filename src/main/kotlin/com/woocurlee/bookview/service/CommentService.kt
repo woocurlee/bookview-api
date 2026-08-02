@@ -104,10 +104,9 @@ class CommentService(
     }
 
     fun getCommentsByReviewId(reviewId: String): List<CommentResponse> {
-        // 모든 댓글 조회 (삭제된 댓글 포함)
+        // 모든 댓글 조회 (삭제된 댓글 포함) — ACTIVE/DELETED를 한 번에
         val allComments =
-            commentRepository.findByReviewIdAndStatus(reviewId, Status.ACTIVE) +
-                commentRepository.findByReviewIdAndStatus(reviewId, Status.DELETED)
+            commentRepository.findByReviewIdAndStatusIn(reviewId, listOf(Status.ACTIVE, Status.DELETED))
 
         // 대댓글 맵 생성
         val repliesMap = allComments.filter { it.parentId != null }.groupBy { it.parentId }

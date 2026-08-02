@@ -25,6 +25,11 @@ interface CommentRepository : MongoRepository<Comment, String> {
         status: Status,
     ): List<Comment>
 
+    fun findByReviewIdAndStatusIn(
+        reviewId: String,
+        statuses: List<Status>,
+    ): List<Comment>
+
     fun findByParentIdAndStatus(
         parentId: String,
         status: Status,

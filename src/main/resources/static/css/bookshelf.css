@@ -63,8 +63,10 @@
 #panelShelf .bs-cell.empty { border: none; background: none; }
 #panelShelf .bs-cell.has { cursor: pointer; }
 #panelShelf .bs-cell .dn { position: absolute; top: 4px; left: 7px; font-size: 10px; font-weight: 700; color: var(--cal-ink); opacity: 0.8; }
-/* 미니 책: 칸 '높이' 기준으로 크기 조정 → 위쪽에 날짜 숫자 공간을 항상 남긴다 */
-#panelShelf .bs-cell .mini { position: absolute; left: 50%; bottom: 6%; transform: translateX(-50%); height: 64%; max-height: 104px; aspect-ratio: 2 / 3; background: var(--f); border: 1.5px solid var(--edge); border-radius: 2px 3px 3px 2px; box-shadow: 0 3px 5px -3px rgba(50, 32, 14, 0.55); }
+/* 미니 책: 칸 '높이' 기준으로 크기 조정 → 위(날짜)·아래(제목) 공간을 남긴다 */
+#panelShelf .bs-cell .mini { position: absolute; left: 50%; bottom: 24%; transform: translateX(-50%); height: 54%; max-height: 90px; aspect-ratio: 2 / 3; background: var(--f); border: 1.5px solid var(--edge); border-radius: 2px 3px 3px 2px; box-shadow: 0 3px 5px -3px rgba(50, 32, 14, 0.55); }
+/* 완독한 책 제목 (한 줄, 말줄임) */
+#panelShelf .bs-cell .bt { position: absolute; bottom: 6%; left: 5%; right: 5%; text-align: center; font-size: clamp(8px, 1.5vw, 11px); line-height: 1.1; font-weight: 600; color: var(--cal-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #panelShelf .bs-cell .mini::before { content: ""; position: absolute; top: 6%; left: -1.5px; right: -1.5px; height: 8%; background: linear-gradient(#f3ecdc, #e3d6bd); border-radius: 2px 2px 0 0; }
 #panelShelf .bs-cell.has:hover .mini { box-shadow: 0 5px 7px -3px rgba(50, 32, 14, 0.6); }
 /* +N 배지: 미니 책의 우상단 모서리에 부착 (책이 날짜 숫자보다 아래라 충돌 없음) */
@@ -127,5 +129,5 @@
 
 /* 모바일에선 달력 미니 책을 조금 더 작게 */
 @media (max-width: 640px) {
-  #panelShelf .bs-cell .mini { height: 56%; }
+  #panelShelf .bs-cell .mini { height: 46%; }
 }

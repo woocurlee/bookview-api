@@ -164,7 +164,7 @@ async function searchBooks(loadMore = false) {
                 bookItem.className = 'flex flex-col p-4 border-2 border-stone-200 rounded-lg cursor-pointer transition-all hover:border-amber-500 hover:bg-amber-50';
                 bookItem.onclick = () => selectBook(book);
                 bookItem.innerHTML = `
-                    <img src="${book.thumbnail}" alt="${book.title}" class="w-full h-48 object-contain rounded mb-3">
+                    ${coverImgTag(book.thumbnail, 'w-full h-48 object-contain rounded mb-3', book.title)}
                     <div class="flex-1">
                         <div class="font-semibold mb-1 line-clamp-2">${book.title}</div>
                         <div class="text-gray-600 text-sm line-clamp-1">${book.authors.join(', ')}</div>

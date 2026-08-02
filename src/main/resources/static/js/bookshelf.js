@@ -54,10 +54,58 @@ function bsOnResize() {
     }, 200);
 }
 
-/** 변경 작업 후 '읽은 책' 탭을 유지한 채 새로고침 */
-function reloadKeepingShelf() {
-    location.hash = 'shelf';
-    location.reload();
+// 서버 응답(BookshelfEntry) → 클라이언트 표시용 항목
+function toClientEntry(e) {
+    return {
+        id: e.id,
+        bookTitle: e.bookTitle,
+        bookAuthor: e.bookAuthor,
+        bookThumbnail: e.bookThumbnail,
+        bookIsbn: e.bookIsbn,
+        startedAt: e.startedAt,
+        finishedAt: e.finishedAt,
+    };
+}
+
+// 완독=완독일 최신순, 읽는 중=시작일 최신순 (서버 정렬과 동일하게 유지)
+function bsSortEntries() {
+    bsFinished.sort((a, b) => (b.finishedAt || '').localeCompare(a.finishedAt || ''));
+    bsReading.sort((a, b) => (b.startedAt || '').localeCompare(a.startedAt || ''));
+}
+
+// 새로고침 없이 현재 뷰를 다시 그린다 (추가/수정/삭제 후)
+function bsRerender() {
+    bsFinishedByDate = {};
+    bsFinished.forEach(e => {
+        if (!e.finishedAt) return;
+        (bsFinishedByDate[e.finishedAt] = bsFinishedByDate[e.finishedAt] || []).push(e);
+    });
+
+    const total = bsReading.length + bsFinished.length;
+    const empty = document.getElementById('shelfEmpty');
+    const viewCalendar = document.getElementById('viewCalendar');
+    const viewShelf = document.getElementById('viewShelf');
+    const seg = document.querySelector('#panelShelf .bs-seg');
+
+    if (total === 0) {
+        empty.classList.remove('hidden');
+        viewCalendar.classList.add('hidden');
+        viewShelf.classList.add('hidden');
+        if (seg) seg.classList.add('hidden');
+        return;
+    }
+    empty.classList.add('hidden');
+    if (seg) seg.classList.remove('hidden');
+    document.querySelectorAll('#panelShelf .bs-seg-btn').forEach(b => {
+        b.classList.toggle('on', b.dataset.view === bsCurrentView);
+    });
+
+    renderReadingStrip();
+    renderCalendar();
+    const isShelf = bsCurrentView === 'shelf';
+    viewCalendar.classList.toggle('hidden', isShelf);
+    viewShelf.classList.toggle('hidden', !isShelf);
+    if (isShelf) renderShelfView();
 }
 
 function parseDataIsland(id) {
@@ -73,8 +121,8 @@ function parseDataIsland(id) {
 // ── 탭 전환 ────────────────────────────────────────────────
 function switchBookshelfTab(tab) {
     const isReviews = tab === 'reviews';
-    document.getElementById('panelReviews').classList.toggle('hidden', !isReviews);
-    document.getElementById('panelShelf').classList.toggle('hidden', isReviews);
+    // 패널 표시는 루트 클래스(인라인 CSS)로 제어 → Tailwind 비동기 로딩과 무관하게 즉시 반영
+    document.documentElement.classList.toggle('__view-shelf', !isReviews);
 
     setTabActive('tabReviewsBtn', isReviews);
     setTabActive('tabShelfBtn', !isReviews);
@@ -227,6 +275,12 @@ function dayCell(day, entries) {
             mini.appendChild(plus); // 책 모서리에 부착 (날짜 숫자와 충돌 방지)
         }
         cell.appendChild(mini);
+
+        const bt = document.createElement('span');
+        bt.className = 'bt';
+        bt.textContent = entries[0].bookTitle;
+        cell.appendChild(bt);
+
         cell.onclick = entries.length > 1 ? () => openDayModal(entries) : () => openEntryDetail(entries[0]);
     }
     return cell;
@@ -415,8 +469,14 @@ async function bsSaveEntryEdit() {
         return;
     }
     try {
-        await API.put(`/api/bookshelf/${bsEditingEntry.id}`, { startedAt, finishedAt });
-        reloadKeepingShelf();
+        const updated = await API.put(`/api/bookshelf/${bsEditingEntry.id}`, { startedAt, finishedAt });
+        const entry = toClientEntry(updated);
+        bsReading = bsReading.filter(e => e.id !== entry.id);
+        bsFinished = bsFinished.filter(e => e.id !== entry.id);
+        if (entry.finishedAt) bsFinished.push(entry); else bsReading.push(entry);
+        bsSortEntries();
+        closeEntryDetailModal();
+        bsRerender();
     } catch (e) {
         Alert.error(e.message);
     }
@@ -426,8 +486,12 @@ async function bsDeleteEntry() {
     if (!bsEditingEntry) return;
     if (!Alert.confirm('이 책을 책장에서 삭제할까요?')) return;
     try {
-        await API.delete(`/api/bookshelf/${bsEditingEntry.id}`);
-        reloadKeepingShelf();
+        const id = bsEditingEntry.id;
+        await API.delete(`/api/bookshelf/${id}`);
+        bsReading = bsReading.filter(e => e.id !== id);
+        bsFinished = bsFinished.filter(e => e.id !== id);
+        closeEntryDetailModal();
+        bsRerender();
     } catch (e) {
         Alert.error(e.message);
     }
@@ -518,8 +582,19 @@ async function bsSubmitEntry() {
         return;
     }
     try {
-        await API.post('/api/bookshelf', { ...bsSelectedBook, startedAt, finishedAt });
-        reloadKeepingShelf();
+        const created = await API.post('/api/bookshelf', { ...bsSelectedBook, startedAt, finishedAt });
+        const entry = toClientEntry(created);
+        if (entry.finishedAt) {
+            bsFinished.push(entry);
+            const d = new Date(entry.finishedAt); // 완독 등록 시 해당 달로 달력 이동
+            calYear = d.getFullYear();
+            calMonth = d.getMonth();
+        } else {
+            bsReading.push(entry);
+        }
+        bsSortEntries();
+        closeAddBookModal();
+        bsRerender();
     } catch (e) {
         Alert.error(e.message);
     }

@@ -2,6 +2,17 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{layout :: head(${profileUser.nickname + ' - BookView'})}"></head>
 <body class="bg-gradient-to-br from-stone-100 to-stone-50 min-h-screen">
+    <!-- 탭 초기 상태를 페인트 전에 확정 (리뷰↔읽은책 깜빡임 방지, Tailwind 비동기 로딩과 무관) -->
+    <style>
+        #panelShelf { display: none; }
+        html.__view-shelf #panelReviews { display: none; }
+        html.__view-shelf #panelShelf { display: block; }
+        html.__view-shelf #tabReviewsBtn { color: #a8a29e; border-bottom-color: transparent; }
+        html.__view-shelf #tabShelfBtn { color: #292524; border-bottom-color: #f59e0b; }
+    </style>
+    <script>
+        if (location.hash === '#shelf') document.documentElement.classList.add('__view-shelf');
+    </script>
     <header th:replace="~{layout :: header}"></header>
 
     <div class="max-w-7xl mx-auto px-5 py-5">
@@ -146,6 +157,7 @@
     <!-- 책장 데이터 island (서버에서 이미 `<` 이스케이프 처리됨) -->
     <script type="application/json" id="bookshelfReadingData" th:utext="${bookshelfReadingJson}">[]</script>
     <script type="application/json" id="bookshelfFinishedData" th:utext="${bookshelfFinishedJson}">[]</script>
+
 
     <!-- 프로필 수정 모달 (본인만) -->
     <div th:if="${isOwner}" id="editModal" class="hidden fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 z-50 flex justify-center items-center">

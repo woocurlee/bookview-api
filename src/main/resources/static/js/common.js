@@ -17,6 +17,33 @@ function formatDate(dateString) {
 }
 
 /**
+ * 카카오 책 썸네일(120x174) URL → fname 원본(고화질, https) URL로 변환. (BKVW-11)
+ * 카카오 thumb URL이 아니거나 fname이 없으면 입력값 그대로 반환.
+ * 비공식 URL이라 표시 측에서 onerror 폴백(원본 썸네일)을 함께 둘 것.
+ */
+function hiResCover(url) {
+    if (!url) return url;
+    try {
+        if (url.indexOf('kakaocdn.net/thumb/') === -1) return url;
+        const fname = new URL(url).searchParams.get('fname');
+        if (!fname) return url;
+        return fname.replace(/^http:/, 'https:');
+    } catch (e) {
+        return url;
+    }
+}
+
+/**
+ * 고화질 표지 <img> 태그 문자열 생성 (실패 시 원본 썸네일로 폴백)
+ */
+function coverImgTag(url, className, alt) {
+    const safeAlt = String(alt || '책 표지').replace(/"/g, '&quot;');
+    const orig = (url || '').replace(/'/g, '%27');
+    return `<img src="${hiResCover(url)}" alt="${safeAlt}" class="${className || ''}"` +
+        ` onerror="this.onerror=null;this.src='${orig}'">`;
+}
+
+/**
  * 모달 열기/닫기 유틸리티
  */
 const Modal = {

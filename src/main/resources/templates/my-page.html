@@ -53,7 +53,8 @@
                        th:href="@{/r/{reviewNo}(reviewNo=${review.reviewNo})}"
                        class="relative aspect-square group cursor-pointer overflow-hidden rounded-lg shadow block">
                         <!-- 책 썸네일 -->
-                        <img th:src="${review.bookThumbnail}"
+                        <img th:src="${@coverImage.hiRes(review.bookThumbnail)}"
+                             th:attr="onerror=|this.onerror=null;this.src='${review.bookThumbnail}'|"
                              alt="책 표지"
                              th:if="${review.bookThumbnail != null && !review.bookThumbnail.isEmpty()}"
                              class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110">

@@ -534,7 +534,7 @@ async function bsSearchBooks() {
             item.className = 'flex flex-col p-3 border-2 border-stone-200 rounded-lg cursor-pointer transition-all hover:border-amber-500 hover:bg-amber-50';
             item.onclick = () => bsSelectBook(book);
             item.innerHTML = `
-                <img src="${book.thumbnail}" alt="${escapeHtml(book.title)}" class="w-full h-40 object-contain rounded mb-2">
+                ${coverImgTag(book.thumbnail, 'w-full h-40 object-contain rounded mb-2', book.title)}
                 <div class="font-semibold text-sm mb-0.5 line-clamp-2">${escapeHtml(book.title)}</div>
                 <div class="text-stone-500 text-xs line-clamp-1">${escapeHtml((book.authors || []).join(', '))}</div>
             `;
@@ -604,7 +604,8 @@ async function bsSubmitEntry() {
 function setThumbnail(imgId, entry) {
     const img = document.getElementById(imgId);
     if (entry.bookThumbnail) {
-        img.src = entry.bookThumbnail;
+        img.src = hiResCover(entry.bookThumbnail);
+        img.onerror = function () { img.onerror = null; img.src = entry.bookThumbnail; }; // 폴백
         img.classList.remove('hidden');
     } else {
         img.removeAttribute('src');
@@ -614,7 +615,7 @@ function setThumbnail(imgId, entry) {
 
 function thumbHtml(entry, imgClass) {
     if (entry.bookThumbnail) {
-        return `<img src="${entry.bookThumbnail}" alt="${escapeHtml(entry.bookTitle)}" class="${imgClass}">`;
+        return coverImgTag(entry.bookThumbnail, imgClass, entry.bookTitle);
     }
     return `<div class="w-full h-full flex items-center justify-center bg-stone-200 text-stone-400 text-lg">📖</div>`;
 }

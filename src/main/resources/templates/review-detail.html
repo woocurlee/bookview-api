@@ -56,7 +56,8 @@
             <!-- 책 정보 히어로 -->
             <div class="bg-stone-800 p-6 md:p-8">
                 <div class="flex gap-5 items-start">
-                    <img th:src="${review.bookThumbnail}"
+                    <img th:src="${@coverImage.hiRes(review.bookThumbnail)}"
+                         th:attr="onerror=|this.onerror=null;this.src='${review.bookThumbnail}'|"
                          alt="책 표지"
                          th:if="${review.bookThumbnail != null && !review.bookThumbnail.isEmpty()}"
                          class="w-28 h-40 md:w-32 md:h-44 object-cover rounded-lg shadow-2xl flex-shrink-0 ring-1 ring-white/10">

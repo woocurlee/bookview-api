@@ -164,7 +164,8 @@
             <!-- 책 정보 (편집 모드, 읽기 전용) -->
             <div th:if="${review != null}" class="mb-6 p-4 bg-stone-50 rounded-lg">
                 <div class="flex gap-4">
-                    <img th:src="${review.bookThumbnail}"
+                    <img th:src="${@coverImage.hiRes(review.bookThumbnail)}"
+                         th:attr="onerror=|this.onerror=null;this.src='${review.bookThumbnail}'|"
                          alt="책 표지"
                          th:if="${review.bookThumbnail != null && !review.bookThumbnail.isEmpty()}"
                          class="w-20 h-28 object-cover rounded shadow">

@@ -73,7 +73,8 @@
                     <a th:each="review : ${reviews}"
                        th:href="@{/r/{reviewNo}(reviewNo=${review.reviewNo})}"
                        class="relative aspect-square group cursor-pointer overflow-hidden rounded-lg shadow block">
-                        <img th:src="${review.bookThumbnail}"
+                        <img th:src="${@coverImage.hiRes(review.bookThumbnail)}"
+                             th:attr="onerror=|this.onerror=null;this.src='${review.bookThumbnail}'|"
                              alt="책 표지"
                              th:if="${review.bookThumbnail != null && !review.bookThumbnail.isEmpty()}"
                              th:classappend="${review.status.name() == 'BLOCK'} ? 'opacity-40' : ''"

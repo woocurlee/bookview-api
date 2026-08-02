@@ -18,7 +18,8 @@
         <div id="reviewsContainer" th:each="review : ${reviews}">
             <a th:href="@{/r/{reviewNo}(reviewNo=${review.reviewNo})}" class="block no-underline">
                 <div class="bg-white rounded-xl p-5 mb-5 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md duration-200 flex flex-col sm:flex-row gap-4 sm:gap-5 cursor-pointer">
-                <img th:src="${review.bookThumbnail}"
+                <img th:src="${@coverImage.hiRes(review.bookThumbnail)}"
+                     th:attr="onerror=|this.onerror=null;this.src='${review.bookThumbnail}'|"
                      th:alt="${review.bookTitle + ' 표지'}"
                      th:if="${review.bookThumbnail != null && !review.bookThumbnail.isEmpty()}"
                      class="w-full h-36 sm:w-auto sm:h-48 object-cover rounded-lg sm:flex-shrink-0">

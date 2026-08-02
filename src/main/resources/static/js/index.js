@@ -72,7 +72,7 @@ async function loadMoreReviews() {
 
 function createReviewCard(review) {
     const thumbnail = review.bookThumbnail
-        ? `<img src="${review.bookThumbnail}" alt="책 표지" class="w-full h-36 sm:w-auto sm:h-48 object-cover rounded-lg sm:flex-shrink-0">`
+        ? coverImgTag(review.bookThumbnail, 'w-full h-36 sm:w-auto sm:h-48 object-cover rounded-lg sm:flex-shrink-0', '책 표지')
         : '';
 
     const stars = createStarRating(review.rating);

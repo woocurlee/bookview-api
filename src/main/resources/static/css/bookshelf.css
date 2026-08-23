@@ -101,6 +101,12 @@
 /* 읽는 중 책갈피 */
 #panelShelf .mark { position: absolute; top: -8px; right: 8px; width: 9px; height: 20px; background: var(--bs-accent); border: 2px solid var(--edge); border-radius: 2px 2px 0 0; z-index: 3; }
 
+/* 재독 배지(N회차 읽음 / 재독). 가로는 책 안쪽에 둬 좁은 간격(gap 7px)에서 옆 책과 겹쳐
+   모바일 탭이 잘못 눌리는 걸 방지한다(세로는 행 상단 여백 26px 안에서만 튀어나옴). */
+#panelShelf .reread { position: absolute; top: -6px; left: 2px; font-size: 9px; font-weight: 800; color: #fff;
+  background: var(--bs-accent-strong); border: 1.5px solid #f4ecda; border-radius: 999px; padding: 0 5px;
+  line-height: 1.5; white-space: nowrap; pointer-events: none; z-index: 3; }
+
 /* 정면 책 */
 #panelShelf .bs-bkf { flex: 0 0 auto; position: relative; width: 74px; height: 108px; background: var(--f);
   border: 2px solid var(--edge); border-radius: 4px 6px 6px 4px; cursor: pointer; margin: 0 3px; padding: 0;

@@ -133,7 +133,11 @@
 
 #panelShelf .hidden { display: none; }
 
-/* 모바일에선 달력 미니 책을 조금 더 작게 */
+/* 모바일에선 좁은 셀에 제목을 욱여넣는 대신 숨기고, 그만큼 확보된 공간으로 미니 책 아이콘을 크게 키운다.
+   상단은 날짜 숫자(.dn, top: 4px 고정)가 앉을 자리만큼 고정 픽셀로 비워, 셀이 작아져도 겹치지 않게 한다. */
 @media (max-width: 640px) {
-  #panelShelf .bs-cell .mini { height: 46%; }
+  #panelShelf .bs-cal-week { gap: 4px; }
+  #panelShelf .bs-cal-grid { gap: 4px; }
+  #panelShelf .bs-cell .mini { top: 18px; bottom: 6%; height: auto; }
+  #panelShelf .bs-cell .bt { display: none; }
 }

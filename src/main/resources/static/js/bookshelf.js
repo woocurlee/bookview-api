@@ -54,6 +54,51 @@ function bsOnResize() {
     }, 200);
 }
 
+// 같은 책(bookIsbn)의 재독 순번. renderShelf/bsRerender에서 매번 다시 계산한다.
+// - orderMap: 완독 항목 id -> 완독일 오름차순 회차(1부터)
+// - countByIsbn: isbn -> 완독 총 횟수 (읽는 중 항목의 "N번째 읽는 중" 안내에 사용)
+let bsReadOrder = { orderMap: {}, countByIsbn: {} };
+
+function buildReadOrderMaps() {
+    const byIsbn = {};
+    bsFinished.forEach(e => {
+        if (!e.bookIsbn) return;
+        (byIsbn[e.bookIsbn] = byIsbn[e.bookIsbn] || []).push(e);
+    });
+    const orderMap = {};
+    const countByIsbn = {};
+    Object.keys(byIsbn).forEach(isbn => {
+        const list = byIsbn[isbn].slice().sort((a, b) => (a.finishedAt || '').localeCompare(b.finishedAt || ''));
+        countByIsbn[isbn] = list.length;
+        list.forEach((e, idx) => { orderMap[e.id] = idx + 1; });
+    });
+    bsReadOrder = { orderMap, countByIsbn };
+}
+
+// 책장/모달 등에 노출하는 정식 문구. 1회차(재독 아님)는 노출할 정보가 없으므로 null.
+// - 완독 항목: "2회차 읽음"
+// - 읽는 중 항목: 같은 책의 완독 이력이 있으면 "2번째 읽는 중" (확정 회차 아님)
+function readTag(entry) {
+    if (!entry.bookIsbn) return null;
+    if (entry.finishedAt) {
+        const n = bsReadOrder.orderMap[entry.id];
+        return (n && n >= 2) ? `${n}회차 읽음` : null;
+    }
+    const total = bsReadOrder.countByIsbn[entry.bookIsbn] || 0;
+    return total >= 1 ? `${total + 1}번째 읽는 중` : null;
+}
+
+// 책등/정면책처럼 공간이 좁은 곳에 쓰는 축약형 ("×2" / "재독")
+function readTagCompact(entry) {
+    if (!entry.bookIsbn) return null;
+    if (entry.finishedAt) {
+        const n = bsReadOrder.orderMap[entry.id];
+        return (n && n >= 2) ? `×${n}` : null;
+    }
+    const total = bsReadOrder.countByIsbn[entry.bookIsbn] || 0;
+    return total >= 1 ? '재독' : null;
+}
+
 // 서버 응답(BookshelfEntry) → 클라이언트 표시용 항목
 function toClientEntry(e) {
     return {
@@ -80,6 +125,7 @@ function bsRerender() {
         if (!e.finishedAt) return;
         (bsFinishedByDate[e.finishedAt] = bsFinishedByDate[e.finishedAt] || []).push(e);
     });
+    buildReadOrderMaps();
 
     const total = bsReading.length + bsFinished.length;
     const empty = document.getElementById('shelfEmpty');
@@ -145,6 +191,7 @@ function setTabActive(btnId, active) {
 
 // ── 렌더링 ────────────────────────────────────────────────
 function renderShelf() {
+    buildReadOrderMaps();
     const total = bsReading.length + bsFinished.length;
     const empty = document.getElementById('shelfEmpty');
     const viewCalendar = document.getElementById('viewCalendar');
@@ -223,7 +270,8 @@ function renderReadingStrip() {
         const el = document.createElement('button');
         el.type = 'button';
         el.className = 'bs-mini-faced ' + bookStyle(entry).fill;
-        el.title = entry.bookTitle;
+        const tag = readTag(entry);
+        el.title = tag ? `${entry.bookTitle} · ${tag}` : entry.bookTitle; // 터치 기기는 title 툴팁이 안 뜨므로, 재독 정보는 상세 모달에서도 확인 가능
         el.onclick = () => openEntryDetail(entry);
         el.innerHTML = `<span class="mk"></span><span class="mm">${escapeHtml(entry.bookTitle)}</span>`;
         list.appendChild(el);
@@ -264,7 +312,10 @@ function dayCell(day, entries) {
     if (entries.length > 0) {
         cell.classList.add('has');
         cell.tabIndex = 0;
-        cell.title = entries.length > 1 ? `${entries.length}권 완독` : entries[0].bookTitle;
+        const soloTag = entries.length === 1 ? readTag(entries[0]) : null;
+        cell.title = entries.length > 1
+            ? `${entries.length}권 완독`
+            : (soloTag ? `${entries[0].bookTitle} · ${soloTag}` : entries[0].bookTitle);
 
         const mini = document.createElement('span');
         mini.className = 'mini ' + bookStyle(entries[0]).fill;
@@ -362,9 +413,15 @@ function makeSpine(entry) {
     const el = document.createElement('button');
     el.type = 'button';
     el.className = ['bs-book', s.width, s.height, s.fill, s.motif].filter(Boolean).join(' ');
-    el.title = entry.bookTitle;
+    const tagFull = readTag(entry);
+    el.title = tagFull ? `${entry.bookTitle} · ${tagFull}` : entry.bookTitle;
     if (s.width === 'k-m' || s.width === 'k-l' || s.width === 'k-xl') {
         el.innerHTML = `<span class="cap"><span>${escapeHtml(entry.bookTitle)}</span></span>`;
+    }
+    // 폭이 가장 좁은 k-s는 배지를 얹을 공간이 없어 생략
+    if (s.width !== 'k-s') {
+        const tag = readTagCompact(entry);
+        if (tag) el.insertAdjacentHTML('beforeend', `<span class="reread">${escapeHtml(tag)}</span>`);
     }
     el.onclick = () => openEntryDetail(entry);
     return el;
@@ -374,9 +431,12 @@ function makeFaced(entry) {
     const el = document.createElement('button');
     el.type = 'button';
     el.className = 'bs-bkf ' + bookStyle(entry).fill;
-    el.title = entry.bookTitle;
+    const tagFull = readTag(entry);
+    el.title = tagFull ? `${entry.bookTitle} · ${tagFull}` : entry.bookTitle;
     const mark = entry.finishedAt ? '' : '<span class="mark"></span>';
-    el.innerHTML = `${mark}<span class="ct">${escapeHtml(entry.bookTitle)}</span><span class="ca">${escapeHtml(entry.bookAuthor)}</span>`;
+    const tag = readTagCompact(entry);
+    const badge = tag ? `<span class="reread">${escapeHtml(tag)}</span>` : '';
+    el.innerHTML = `${mark}${badge}<span class="ct">${escapeHtml(entry.bookTitle)}</span><span class="ca">${escapeHtml(entry.bookAuthor)}</span>`;
     el.onclick = () => openEntryDetail(entry);
     return el;
 }
@@ -401,6 +461,7 @@ function openDayModal(entries) {
         row.type = 'button';
         row.className = 'flex gap-3 items-center p-2 rounded-lg hover:bg-stone-50 text-left w-full';
         row.onclick = () => { closeDayModal(); openEntryDetail(entry); };
+        const tag = readTag(entry);
         row.innerHTML = `
             <div class="w-10 h-14 flex-shrink-0 rounded overflow-hidden bg-stone-100">
                 ${thumbHtml(entry, 'w-full h-full object-cover')}
@@ -408,6 +469,7 @@ function openDayModal(entries) {
             <div class="min-w-0">
                 <div class="font-semibold text-sm text-stone-800 line-clamp-1">${escapeHtml(entry.bookTitle)}</div>
                 <div class="text-xs text-stone-500 line-clamp-1">${escapeHtml(entry.bookAuthor)}</div>
+                ${tag ? `<div class="text-xs text-amber-600 font-bold mt-0.5">🔁 ${escapeHtml(tag)}</div>` : ''}
             </div>`;
         list.appendChild(row);
     });
@@ -431,6 +493,11 @@ function openEntryDetail(entry) {
     document.getElementById('edTitle').textContent = entry.bookTitle;
     document.getElementById('edAuthor').textContent = entry.bookAuthor;
     setThumbnail('edThumbnail', entry);
+
+    const tagEl = document.getElementById('edReadTag');
+    const tag = readTag(entry);
+    tagEl.textContent = tag ? `🔁 ${tag}` : '';
+    tagEl.classList.toggle('hidden', !tag);
 
     const ownerControls = document.getElementById('edOwnerControls');
     const readonly = document.getElementById('edReadonly');

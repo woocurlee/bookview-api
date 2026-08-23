@@ -1,5 +1,6 @@
 package com.woocurlee.bookview.service
 
+import com.woocurlee.bookview.common.ReservedNicknames
 import com.woocurlee.bookview.domain.Status
 import com.woocurlee.bookview.domain.User
 import com.woocurlee.bookview.dto.UserSitemapProjection
@@ -51,6 +52,12 @@ class UserService(
         // 연속된 마침표 검증
         if (nickname.contains("..")) {
             throw IllegalArgumentException("마침표(..)를 연속으로 사용할 수 없습니다.")
+        }
+
+        // 예약어 검증 (마침표/밑줄로 구분된 토큰 단위로 매칭)
+        val reservedToken = nickname.split(Regex("[._]")).firstOrNull { it in ReservedNicknames.VALUES }
+        if (reservedToken != null) {
+            throw IllegalArgumentException("닉네임에 사용할 수 없는 단어가 포함되어 있습니다: '$reservedToken'")
         }
 
         // 닉네임 중복 체크 (본인 제외)

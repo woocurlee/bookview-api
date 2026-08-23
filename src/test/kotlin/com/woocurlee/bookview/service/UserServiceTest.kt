@@ -45,7 +45,7 @@ class UserServiceTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = ["admin", "root", "test", "official", "bookview"])
+    @ValueSource(strings = ["admin", "root", "test", "staff", "bookview"])
     fun `예약어와 정확히 일치하면 예외가 발생하고 메시지에 해당 단어가 포함된다`(reserved: String) {
         assertThatThrownBy { userService.updateNickname("google-1", reserved) }
             .isInstanceOf(IllegalArgumentException::class.java)
@@ -68,6 +68,16 @@ class UserServiceTest {
         val updated = userService.updateNickname("google-1", nickname)
 
         assertThat(updated?.nickname).isEqualTo(nickname)
+    }
+
+    @Test
+    fun `official은 예약어가 아니므로 통과한다`() {
+        given(userRepository.existsByNicknameAndStatus("official", Status.ACTIVE)).willReturn(false)
+        given(userRepository.save(any())).willAnswer { it.arguments[0] as User }
+
+        val updated = userService.updateNickname("google-1", "official")
+
+        assertThat(updated?.nickname).isEqualTo("official")
     }
 
     @Test

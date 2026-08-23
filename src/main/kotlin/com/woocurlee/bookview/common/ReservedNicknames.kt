@@ -15,13 +15,6 @@ object ReservedNicknames {
             "manager",
             "superuser",
             "master",
-            // 지원/공지
-            "support",
-            "help",
-            "notice",
-            "official",
-            "service",
-            "security",
             // 서비스/브랜드
             "bookview",
             // 테스트/더미
